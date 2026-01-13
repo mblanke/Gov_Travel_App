@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  govt-travel-app:
+    build: .
+    container_name: govt-travel-estimator
+    ports:
+      - "5001:5001"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data:ro

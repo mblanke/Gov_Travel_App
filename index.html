@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Government Travel Cost Estimator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛫 Government Travel Cost Estimator</h1>
+            <p class="subtitle">Based on NJC Travel Directive</p>
+            <p class="subtitle"><a href="validation.html" style="color: white; text-decoration: underline; font-size: 0.9rem;">🔍 View Database Validation Status</a></p>
+        </header>
+
+        <main>
+            <form id="travelForm">
+                <section class="form-section">
+                    <h2>Travel Details</h2>
+                    
+                    <div class="form-group">
+                        <label for="departureCity">Departure City *</label>
+                        <input type="text" id="departureCity" required placeholder="e.g., Ottawa" autocomplete="off">
+                        <small id="departureCityStatus" style="display: none;"></small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="destinationCity">Destination City *</label>
+                        <input type="text" id="destinationCity" required placeholder="e.g., Vancouver" autocomplete="off">
+                        <small id="destinationCityStatus" style="display: none;"></small>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="departureDate">Departure Date *</label>
+                            <input type="date" id="departureDate" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="returnDate">Return Date *</label>
+                            <input type="date" id="returnDate" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="destinationType">Destination Type *</label>
+                        <select id="destinationType" required>
+                            <option value="">-- Select Destination Type --</option>
+                            <option value="canada">Canada</option>
+                            <option value="yukon">Yukon</option>
+                            <option value="nwt">Northwest Territories</option>
+                            <option value="nunavut">Nunavut</option>
+                            <option value="usa">Continental USA</option>
+                            <option value="alaska">Alaska</option>
+                            <option value="international">International (Outside Canada/USA)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="transportMode">Transportation Mode *</label>
+                        <select id="transportMode" required>
+                            <option value="">-- Select Transportation --</option>
+                            <option value="flight">Flight</option>
+                            <option value="vehicle">Personal Vehicle</option>
+                            <option value="train">Train</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="flightOptionsGroup" style="display: block;">
+                        <button type="button" id="searchFlightsBtn" class="btn-primary" style="width: 100%; margin-bottom: 10px;">
+                            🔍 Search Flights Automatically
+                        </button>
+                        <div id="flightSearchStatus" style="margin-bottom: 10px; padding: 10px; border-radius: 5px; display: none;"></div>
+                        <div id="flightResults" style="display: none; margin-bottom: 15px;"></div>
+                        <small style="color: #666;">Click search to find flights and automatically populate duration and cost</small>
+                    </div>
+
+                    <div class="form-group" id="vehicleOptionsGroup" style="display: none;">
+                        <label for="distanceKm">Estimated Distance (km) *</label>
+                        <input type="number" id="distanceKm" min="0" step="1" placeholder="e.g., 450">
+                        <small>Kilometric rates apply based on NJC Appendix B</small>
+                    </div>
+                </section>
+
+                <section class="form-section">
+                    <h2>Cost Estimates</h2>
+                    
+                    <!-- Hidden fields for flight data -->
+                    <input type="hidden" id="flightDuration">
+                    <input type="hidden" id="estimatedFlightCost">
+                    
+                    <div class="form-group" id="flightCostGroup" style="display: none;">
+                        <div id="selectedFlightInfo" style="padding: 15px; background: #e8f5e9; border-radius: 5px; margin-bottom: 15px; display: none;">
+                            <h4 style="margin-top: 0; color: #2e7d32;">✅ Flight Selected</h4>
+                            <p id="selectedFlightDetails" style="margin: 5px 0;"></p>
+                        </div>
+                        <small style="color: #666;">
+                            💡 Or <a href="#" id="googleFlightsLink" target="_blank" rel="noopener">manually search Google Flights</a>
+                        </small>
+                    </div>
+
+                    <div class="form-group" id="trainCostGroup" style="display: none;">
+                        <label for="estimatedTrainCost">Estimated Train Cost (CAD)</label>
+                        <input type="number" id="estimatedTrainCost" min="0" step="0.01" placeholder="e.g., 150">
+                        <small>Check VIA Rail, Amtrak, or local rail services for fares</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="estimatedAccommodationPerNight">Accommodation per Night (CAD)</label>
+                        <input type="number" id="estimatedAccommodationPerNight" min="0" step="0.01" readonly style="background: #f5f5f5; cursor: not-allowed;" placeholder="Will be calculated automatically">
+                        <small id="accommodationSuggestion" style="color: #2e7d32; font-weight: 500;">✓ Rate will be looked up automatically based on destination city</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="privateAccommodation">
+                            Using Private Non-Commercial Accommodation
+                        </label>
+                        <small>Check if staying with family/friends instead of hotel</small>
+                    </div>
+                </section>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Calculate Estimate</button>
+                    <button type="reset" class="btn-secondary">Clear Form</button>
+                </div>
+            </form>
+
+            <div id="results" class="results hidden">
+                <h2>📊 Travel Cost Estimate</h2>
+                
+                <div class="results-summary">
+                    <div class="summary-card">
+                        <h3>Total Estimated Cost</h3>
+                        <p class="total-amount" id="totalCost">$0.00</p>
+                    </div>
+                    <div class="results-actions">
+                        <button type="button" onclick="exportCurrentEstimate()" class="btn-export" title="Export estimate to CSV">
+                            📥 Export CSV
+                        </button>
+                        <button type="button" onclick="printEstimate()" class="btn-print" title="Print estimate">
+                            🖨️ Print
+                        </button>
+                    </div>
+                </div>
+
+                <div class="results-breakdown">
+                    <h3>Cost Breakdown</h3>
+                    
+                    <div class="breakdown-item">
+                        <div class="item-header">
+                            <span class="item-label" id="transportLabel">🚗 Transportation Cost</span>
+                            <span class="item-amount" id="transportCost">$0.00</span>
+                        </div>
+                        <p class="item-note" id="transportNote"></p>
+                    </div>
+
+                    <div class="breakdown-item">
+                        <div class="item-header">
+                            <span class="item-label">🏨 Accommodation</span>
+                            <span class="item-amount" id="accommodationCost">$0.00</span>
+                        </div>
+                        <p class="item-note" id="accommodationNote"></p>
+                    </div>
+
+                    <div class="breakdown-item">
+                        <div class="item-header">
+                            <span class="item-label">🍽️ Meals</span>
+                            <span class="item-amount" id="mealsCost">$0.00</span>
+                        </div>
+                        <p class="item-note" id="mealsNote"></p>
+                    </div>
+
+                    <div class="breakdown-item">
+                        <div class="item-header">
+                            <span class="item-label">💼 Incidental Expenses</span>
+                            <span class="item-amount" id="incidentalsCost">$0.00</span>
+                        </div>
+                        <p class="item-note" id="incidentalsNote"></p>
+                    </div>
+                </div>
+
+                <div class="policy-references">
+                    <h3>📋 Policy References</h3>
+                    <ul id="policyLinks">
+                        <li><a href="https://www.njc-cnm.gc.ca/directive/d10/en" target="_blank">NJC Travel Directive (Main)</a></li>
+                        <li><a href="https://www.njc-cnm.gc.ca/directive/travel-voyage/td-dv-a3-eng.php" target="_blank">Appendix C - Allowances (Canada & USA)</a></li>
+                        <li><a href="https://www.njc-cnm.gc.ca/directive/app_d.php?lang=en" target="_blank">Appendix D - International Allowances</a></li>
+                        <li><a href="https://rehelv-acrd.tpsgc-pwgsc.gc.ca/lth-crl-eng.aspx" target="_blank">Accommodation Directory</a></li>
+                    </ul>
+                </div>
+
+                <div class="disclaimer">
+                    <p><strong>⚠️ Important Disclaimer:</strong></p>
+                    <p>This is an estimate only. Actual costs and allowances may vary. Always consult with your Designated Departmental Travel Coordinator and follow the official NJC Travel Directive for final approval and reimbursement details.</p>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Based on NJC Travel Directive effective October 1, 2025</p>
+        </footer>
+    </div>
+
+    <script src="script.js?v=20260112-1610"></script>
+    <!-- <script src="enhanced-features.js"></script> -->
+</body>
+</html>

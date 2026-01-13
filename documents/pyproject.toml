@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gov-travel"
+version = "0.1.0"
+description = "Scrape NJC travel rates into SQLite"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "beautifulsoup4==4.12.3",
+  "lxml==5.3.0",
+  "pandas==2.2.3",
+  "requests==2.32.3",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

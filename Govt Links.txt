@@ -1,0 +1,15 @@
+
+Allowances:
+	Canadian
+		https://www.njc-cnm.gc.ca/directive/travel-voyage/td-dv-a3-eng.php
+	USA & International
+		https://www.njc-cnm.gc.ca/directive/app_d.php?lang=en
+		
+Accommodations
+	Canadian
+		https://rehelv-acrd.tpsgc-pwgsc.gc.ca/lth-crl-eng.aspx#canadian
+	USA	
+		https://rehelv-acrd.tpsgc-pwgsc.gc.ca/lth-crl-eng.aspx#us
+	International	
+		https://rehelv-acrd.tpsgc-pwgsc.gc.ca/lth-crl-eng.aspx#us
+	

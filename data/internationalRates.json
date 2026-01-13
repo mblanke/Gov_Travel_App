@@ -1,0 +1,924 @@
+{
+  "metadata": {
+    "effectiveDate": "2026-01-01",
+    "version": "2.0",
+    "source": "NJC Travel Directive Appendix D - Module 4",
+    "url": "https://www.njc-cnm.gc.ca/directive/app_d/en",
+    "lastUpdated": "2026-01-12",
+    "notes": "International travel allowances. C-Day = Commercial Accommodation, P-Day = Private/Non-commercial. Duration: 1-30, 31-120, 121+ days. All rates in original currencies as per NJC."
+  },
+  "countries": {
+    "latvia": {
+      "name": "Latvia",
+      "currency": "EUR",
+      "cities": {
+        "riga": {
+          "name": "Riga",
+          "meals": {
+            "cDay_1_30": {
+              "breakfast": 23.85,
+              "lunch": 41.60,
+              "dinner": 55.15,
+              "total": 120.60
+            },
+            "cDay_31_120": {
+              "breakfast": 17.89,
+              "lunch": 31.20,
+              "dinner": 41.36,
+              "total": 90.45
+            },
+            "cDay_121_plus": {
+              "breakfast": 11.93,
+              "lunch": 20.80,
+              "dinner": 27.58,
+              "total": 60.30
+            },
+            "pDay_1_30": {
+              "breakfast": 23.85,
+              "lunch": 41.60,
+              "dinner": 55.15,
+              "total": 120.60
+            },
+            "pDay_31_120": {
+              "breakfast": 17.89,
+              "lunch": 31.20,
+              "dinner": 41.36,
+              "total": 90.45
+            },
+            "pDay_121_plus": {
+              "breakfast": 11.93,
+              "lunch": 20.80,
+              "dinner": 27.58,
+              "total": 60.30
+            }
+          },
+          "accommodation": {
+            "cDay_1_30": 38.59,
+            "cDay_31_120": 28.94,
+            "cDay_121_plus": 28.94,
+            "pDay_1_30": 24.12,
+            "pDay_31_120": 18.09,
+            "pDay_121_plus": 18.09
+          },
+          "dailyTotal": {
+            "cDay_1_30": 159.19,
+            "cDay_31_120": 119.39,
+            "cDay_121_plus": 89.24,
+            "pDay_1_30": 144.72,
+            "pDay_31_120": 108.54,
+            "pDay_121_plus": 78.39
+          }
+        },
+        "other": {
+          "name": "Other cities in Latvia",
+          "meals": {
+            "cDay_1_30": {
+              "breakfast": 19.08,
+              "lunch": 33.28,
+              "dinner": 44.12,
+              "total": 96.48
+            },
+            "cDay_31_120": {
+              "breakfast": 14.31,
+              "lunch": 24.96,
+              "dinner": 33.09,
+              "total": 72.36
+            },
+            "cDay_121_plus": {
+              "breakfast": 9.54,
+              "lunch": 16.64,
+              "dinner": 22.06,
+              "total": 48.24
+            },
+            "pDay_1_30": {
+              "breakfast": 19.08,
+              "lunch": 33.28,
+              "dinner": 44.12,
+              "total": 96.48
+            },
+            "pDay_31_120": {
+              "breakfast": 14.31,
+              "lunch": 24.96,
+              "dinner": 33.09,
+              "total": 72.36
+            },
+            "pDay_121_plus": {
+              "breakfast": 9.54,
+              "lunch": 16.64,
+              "dinner": 22.06,
+              "total": 48.24
+            }
+          },
+          "accommodation": {
+            "cDay_1_30": 30.87,
+            "cDay_31_120": 23.16,
+            "cDay_121_plus": 23.16,
+            "pDay_1_30": 19.30,
+            "pDay_31_120": 14.47,
+            "pDay_121_plus": 14.47
+          },
+          "dailyTotal": {
+            "cDay_1_30": 127.35,
+            "cDay_31_120": 95.52,
+            "cDay_121_plus": 71.40,
+            "pDay_1_30": 115.78,
+            "pDay_31_120": 86.83,
+            "pDay_121_plus": 62.71
+          }
+        }
+      }
+    },
+    "laos": {
+      "name": "Laos",
+      "currency": "USD",
+      "cities": {
+        "vientiane": {
+          "name": "Vientiane",
+          "meals": {
+            "cDay_1_30": {
+              "breakfast": 13.85,
+              "lunch": 16.30,
+              "dinner": 22.00,
+              "total": 52.15
+            },
+            "cDay_31_120": {
+              "breakfast": 10.39,
+              "lunch": 12.23,
+              "dinner": 16.50,
+              "total": 39.11
+            },
+            "cDay_121_plus": {
+              "breakfast": 6.93,
+              "lunch": 8.15,
+              "dinner": 11.00,
+              "total": 26.08
+            },
+            "pDay_1_30": {
+              "breakfast": 13.85,
+              "lunch": 16.30,
+              "dinner": 22.00,
+              "total": 52.15
+            },
+            "pDay_31_120": {
+              "breakfast": 10.39,
+              "lunch": 12.23,
+              "dinner": 16.50,
+              "total": 39.11
+            },
+            "pDay_121_plus": {
+              "breakfast": 6.93,
+              "lunch": 8.15,
+              "dinner": 11.00,
+              "total": 26.08
+            }
+          },
+          "accommodation": {
+            "cDay_1_30": 16.69,
+            "cDay_31_120": 12.52,
+            "cDay_121_plus": 12.52,
+            "pDay_1_30": 10.43,
+            "pDay_31_120": 7.82,
+            "pDay_121_plus": 7.82
+          },
+          "dailyTotal": {
+            "cDay_1_30": 68.84,
+            "cDay_31_120": 51.63,
+            "cDay_121_plus": 38.59,
+            "pDay_1_30": 62.58,
+            "pDay_31_120": 46.94,
+            "pDay_121_plus": 33.90
+          }
+        },
+        "other": {
+          "name": "Other cities in Laos",
+          "meals": {
+            "cDay_1_30": {
+              "breakfast": 11.08,
+              "lunch": 13.04,
+              "dinner": 17.60,
+              "total": 41.72
+            },
+            "cDay_31_120": {
+              "breakfast": 8.31,
+              "lunch": 9.78,
+              "dinner": 13.20,
+              "total": 31.29
+            },
+            "cDay_121_plus": {
+              "breakfast": 5.54,
+              "lunch": 6.52,
+              "dinner": 8.80,
+              "total": 20.86
+            },
+            "pDay_1_30": {
+              "breakfast": 11.08,
+              "lunch": 13.04,
+              "dinner": 17.60,
+              "total": 41.72
+            },
+            "pDay_31_120": {
+              "breakfast": 8.31,
+              "lunch": 9.78,
+              "dinner": 13.20,
+              "total": 31.29
+            },
+            "pDay_121_plus": {
+              "breakfast": 5.54,
+              "lunch": 6.52,
+              "dinner": 8.80,
+              "total": 20.86
+            }
+          },
+          "accommodation": {
+            "cDay_1_30": 13.35,
+            "cDay_31_120": 10.01,
+            "cDay_121_plus": 10.01,
+            "pDay_1_30": 8.34,
+            "pDay_31_120": 6.26,
+            "pDay_121_plus": 6.26
+          },
+          "dailyTotal": {
+            "cDay_1_30": 55.07,
+            "cDay_31_120": 41.30,
+            "cDay_121_plus": 30.87,
+            "pDay_1_30": 50.06,
+            "pDay_31_120": 37.55,
+            "pDay_121_plus": 27.12
+          }
+        }
+      }
+    },
+    "lebanon": {
+      "name": "Lebanon",
+      "currency": "USD",
+      "cities": {
+        "beirut": {
+          "name": "Beirut",
+          "meals": {
+            "cDay_1_30": {
+              "breakfast": 25.35,
+              "lunch": 41.75,
+              "dinner": 53.30,
+              "total": 120.40
+            },
+            "cDay_31_120": {
+              "breakfast": 19.01,
+              "lunch": 31.31,
+              "dinner": 39.98,
+              "total": 90.30
+            },
+            "cDay_121_plus": {
+              "breakfast": 12.68,
+              "lunch": 20.88,
+              "dinner": 26.65,
+              "total": 60.20
+            },
+            "pDay_1_30": {
+              "breakfast": 25.35,
+              "lunch": 41.75,
+              "dinner": 53.30,
+              "total": 120.40
+            },
+            "pDay_31_120": {
+              "breakfast": 19.01,
+              "lunch": 31.31,
+              "dinner": 39.98,
+              "total": 90.30
+            },
+            "pDay_121_plus": {
+              "breakfast": 12.68,
+              "lunch": 20.88,
+              "dinner": 26.65,
+              "total": 60.20
+            }
+          },
+          "accommodation": {
+            "cDay_1_30": 38.53,
+            "cDay_31_120": 28.90,
+            "cDay_121_plus": 28.90,
+            "pDay_1_30": 24.08,
+            "pDay_31_120": 18.06,
+            "pDay_121_plus": 18.06
+          },
+          "dailyTotal": {
+            "cDay_1_30": 158.93,
+            "cDay_31_120": 119.20,
+            "cDay_121_plus": 89.10,
+            "pDay_1_30": 144.48,
+            "pDay_31_120": 108.36,
+            "pDay_121_plus": 78.26
+          }
+        },
+        "other": {
+          "name": "Other cities in Lebanon",
+          "meals": {
+            "cDay_1_30": {
+              "breakfast": 20.28,
+              "lunch": 33.40,
+              "dinner": 42.64,
+              "total": 96.32
+            },
+            "cDay_31_120": {
+              "breakfast": 15.21,
+              "lunch": 25.05,
+              "dinner": 31.98,
+              "total": 72.24
+            },
+            "cDay_121_plus": {
+              "breakfast": 10.14,
+              "lunch": 16.70,
+              "dinner": 21.32,
+              "total": 48.16
+            },
+            "pDay_1_30": {
+              "breakfast": 20.28,
+              "lunch": 33.40,
+              "dinner": 42.64,
+              "total": 96.32
+            },
+            "pDay_31_120": {
+              "breakfast": 15.21,
+              "lunch": 25.05,
+              "dinner": 31.98,
+              "total": 72.24
+            },
+            "pDay_121_plus": {
+              "breakfast": 10.14,
+              "lunch": 16.70,
+              "dinner": 21.32,
+              "total": 48.16
+            }
+          },
+          "accommodation": {
+            "cDay_1_30": 30.82,
+            "cDay_31_120": 23.12,
+            "cDay_121_plus": 23.12,
+            "pDay_1_30": 19.26,
+            "pDay_31_120": 14.45,
+            "pDay_121_plus": 14.45
+          },
+          "dailyTotal": {
+            "cDay_1_30": 127.14,
+            "cDay_31_120": 95.36,
+            "cDay_121_plus": 71.28,
+            "pDay_1_30": 115.58,
+            "pDay_31_120": 86.69,
+            "pDay_121_plus": 62.61
+          }
+        }
+      }
+    },
+    "lesotho": {
+      "name": "Lesotho",
+      "currency": "LSL",
+      "cities": {
+        "maseru": {
+          "name": "Maseru",
+          "meals": {
+            "cDay_1_30": {
+              "breakfast": 222.00,
+              "lunch": 316.50,
+              "dinner": 392.50,
+              "total": 931.00
+            },
+            "cDay_31_120": {
+              "breakfast": 166.50,
+              "lunch": 237.38,
+              "dinner": 294.38,
+              "total": 698.25
+            },
+            "cDay_121_plus": {
+              "breakfast": 111.00,
+              "lunch": 158.25,
+              "dinner": 196.25,
+              "total": 465.50
+            },
+            "pDay_1_30": {
+              "breakfast": 222.00,
+              "lunch": 316.50,
+              "dinner": 392.50,
+              "total": 931.00
+            },
+            "pDay_31_120": {
+              "breakfast": 166.50,
+              "lunch": 237.38,
+              "dinner": 294.38,
+              "total": 698.25
+            },
+            "pDay_121_plus": {
+              "breakfast": 111.00,
+              "lunch": 158.25,
+              "dinner": 196.25,
+              "total": 465.50
+            }
+          },
+          "accommodation": {
+            "cDay_1_30": 297.92,
+            "cDay_31_120": 223.44,
+            "cDay_121_plus": 223.44,
+            "pDay_1_30": 186.20,
+            "pDay_31_120": 139.65,
+            "pDay_121_plus": 139.65
+          },
+          "dailyTotal": {
+            "cDay_1_30": 1228.92,
+            "cDay_31_120": 921.69,
+            "cDay_121_plus": 688.94,
+            "pDay_1_30": 1117.20,
+            "pDay_31_120": 837.90,
+            "pDay_121_plus": 605.15
+          }
+        },
+        "other": {
+          "name": "Other cities in Lesotho",
+          "meals": {
+            "cDay_1_30": {
+              "breakfast": 177.60,
+              "lunch": 253.20,
+              "dinner": 314.00,
+              "total": 744.80
+            },
+            "cDay_31_120": {
+              "breakfast": 133.20,
+              "lunch": 189.90,
+              "dinner": 235.50,
+              "total": 558.60
+            },
+            "cDay_121_plus": {
+              "breakfast": 88.80,
+              "lunch": 126.60,
+              "dinner": 157.00,
+              "total": 372.40
+            },
+            "pDay_1_30": {
+              "breakfast": 177.60,
+              "lunch": 253.20,
+              "dinner": 314.00,
+              "total": 744.80
+            },
+            "pDay_31_120": {
+              "breakfast": 133.20,
+              "lunch": 189.90,
+              "dinner": 235.50,
+              "total": 558.60
+            },
+            "pDay_121_plus": {
+              "breakfast": 88.80,
+              "lunch": 126.60,
+              "dinner": 157.00,
+              "total": 372.40
+            }
+          },
+          "accommodation": {
+            "cDay_1_30": 238.34,
+            "cDay_31_120": 178.75,
+            "cDay_121_plus": 178.75,
+            "pDay_1_30": 148.96,
+            "pDay_31_120": 111.72,
+            "pDay_121_plus": 111.72
+          },
+          "dailyTotal": {
+            "cDay_1_30": 983.14,
+            "cDay_31_120": 737.35,
+            "cDay_121_plus": 551.15,
+            "pDay_1_30": 893.76,
+            "pDay_31_120": 670.32,
+            "pDay_121_plus": 484.12
+          }
+        }
+      }
+    },
+    "liberia": {
+      "name": "Liberia",
+      "currency": "USD",
+      "oneRateForCountry": true,
+      "cities": {
+        "monrovia": {
+          "name": "Monrovia",
+          "meals": {
+            "cDay_1_30": {
+              "breakfast": 23.60,
+              "lunch": 34.05,
+              "dinner": 43.05,
+              "total": 100.70
+            },
+            "cDay_31_120": {
+              "breakfast": 17.70,
+              "lunch": 25.54,
+              "dinner": 32.29,
+              "total": 75.53
+            },
+            "cDay_121_plus": {
+              "breakfast": 11.80,
+              "lunch": 17.03,
+              "dinner": 21.53,
+              "total": 50.35
+            },
+            "pDay_1_30": {
+              "breakfast": 23.60,
+              "lunch": 34.05,
+              "dinner": 43.05,
+              "total": 100.70
+            },
+            "pDay_31_120": {
+              "breakfast": 17.70,
+              "lunch": 25.54,
+              "dinner": 32.29,
+              "total": 75.53
+            },
+            "pDay_121_plus": {
+              "breakfast": 11.80,
+              "lunch": 17.03,
+              "dinner": 21.53,
+              "total": 50.35
+            }
+          },
+          "accommodation": {
+            "cDay_1_30": 32.22,
+            "cDay_31_120": 24.17,
+            "cDay_121_plus": 24.17,
+            "pDay_1_30": 20.14,
+            "pDay_31_120": 15.11,
+            "pDay_121_plus": 15.11
+          },
+          "dailyTotal": {
+            "cDay_1_30": 132.92,
+            "cDay_31_120": 99.69,
+            "cDay_121_plus": 74.52,
+            "pDay_1_30": 120.84,
+            "pDay_31_120": 90.63,
+            "pDay_121_plus": 65.46
+          }
+        }
+      }
+    },
+    "libya": {
+      "name": "Libya",
+      "currency": "LYD",
+      "cities": {
+        "tripoli": {
+          "name": "Tripoli",
+          "meals": {
+            "cDay_1_30": {
+              "breakfast": 82.50,
+              "lunch": 104.50,
+              "dinner": 148.50,
+              "total": 335.50
+            },
+            "cDay_31_120": {
+              "breakfast": 61.88,
+              "lunch": 78.38,
+              "dinner": 111.38,
+              "total": 251.63
+            },
+            "cDay_121_plus": {
+              "breakfast": 41.25,
+              "lunch": 52.25,
+              "dinner": 74.25,
+              "total": 167.75
+            },
+            "pDay_1_30": {
+              "breakfast": 82.50,
+              "lunch": 104.50,
+              "dinner": 148.50,
+              "total": 335.50
+            },
+            "pDay_31_120": {
+              "breakfast": 61.88,
+              "lunch": 78.38,
+              "dinner": 111.38,
+              "total": 251.63
+            },
+            "pDay_121_plus": {
+              "breakfast": 41.25,
+              "lunch": 52.25,
+              "dinner": 74.25,
+              "total": 167.75
+            }
+          },
+          "accommodation": {
+            "cDay_1_30": 107.36,
+            "cDay_31_120": 80.52,
+            "cDay_121_plus": 80.52,
+            "pDay_1_30": 67.10,
+            "pDay_31_120": 50.33,
+            "pDay_121_plus": 50.33
+          },
+          "dailyTotal": {
+            "cDay_1_30": 442.86,
+            "cDay_31_120": 332.15,
+            "cDay_121_plus": 248.27,
+            "pDay_1_30": 402.60,
+            "pDay_31_120": 301.95,
+            "pDay_121_plus": 218.08
+          }
+        },
+        "other": {
+          "name": "Other cities in Libya",
+          "meals": {
+            "cDay_1_30": {
+              "breakfast": 66.00,
+              "lunch": 83.60,
+              "dinner": 118.80,
+              "total": 268.40
+            },
+            "cDay_31_120": {
+              "breakfast": 49.50,
+              "lunch": 62.70,
+              "dinner": 89.10,
+              "total": 201.30
+            },
+            "cDay_121_plus": {
+              "breakfast": 33.00,
+              "lunch": 41.80,
+              "dinner": 59.40,
+              "total": 134.20
+            },
+            "pDay_1_30": {
+              "breakfast": 66.00,
+              "lunch": 83.60,
+              "dinner": 118.80,
+              "total": 268.40
+            },
+            "pDay_31_120": {
+              "breakfast": 49.50,
+              "lunch": 62.70,
+              "dinner": 89.10,
+              "total": 201.30
+            },
+            "pDay_121_plus": {
+              "breakfast": 33.00,
+              "lunch": 41.80,
+              "dinner": 59.40,
+              "total": 134.20
+            }
+          },
+          "accommodation": {
+            "cDay_1_30": 85.89,
+            "cDay_31_120": 64.42,
+            "cDay_121_plus": 64.42,
+            "pDay_1_30": 53.68,
+            "pDay_31_120": 40.26,
+            "pDay_121_plus": 40.26
+          },
+          "dailyTotal": {
+            "cDay_1_30": 354.29,
+            "cDay_31_120": 265.72,
+            "cDay_121_plus": 198.62,
+            "pDay_1_30": 322.08,
+            "pDay_31_120": 241.56,
+            "pDay_121_plus": 174.46
+          }
+        }
+      }
+    },
+    "liechtenstein": {
+      "name": "Liechtenstein",
+      "currency": "CHF",
+      "oneRateForCountry": true,
+      "cities": {
+        "vaduz": {
+          "name": "Vaduz",
+          "meals": {
+            "cDay_1_30": {
+              "breakfast": 23.60,
+              "lunch": 48.25,
+              "dinner": 65.75,
+              "total": 137.60
+            },
+            "cDay_31_120": {
+              "breakfast": 17.70,
+              "lunch": 36.19,
+              "dinner": 49.31,
+              "total": 103.20
+            },
+            "cDay_121_plus": {
+              "breakfast": 11.80,
+              "lunch": 24.13,
+              "dinner": 32.88,
+              "total": 68.80
+            },
+            "pDay_1_30": {
+              "breakfast": 23.60,
+              "lunch": 48.25,
+              "dinner": 65.75,
+              "total": 137.60
+            },
+            "pDay_31_120": {
+              "breakfast": 17.70,
+              "lunch": 36.19,
+              "dinner": 49.31,
+              "total": 103.20
+            },
+            "pDay_121_plus": {
+              "breakfast": 11.80,
+              "lunch": 24.13,
+              "dinner": 32.88,
+              "total": 68.80
+            }
+          },
+          "accommodation": {
+            "cDay_1_30": 44.03,
+            "cDay_31_120": 33.02,
+            "cDay_121_plus": 33.02,
+            "pDay_1_30": 27.52,
+            "pDay_31_120": 20.64,
+            "pDay_121_plus": 20.64
+          },
+          "dailyTotal": {
+            "cDay_1_30": 181.63,
+            "cDay_31_120": 136.22,
+            "cDay_121_plus": 101.82,
+            "pDay_1_30": 165.12,
+            "pDay_31_120": 123.84,
+            "pDay_121_plus": 89.44
+          }
+        }
+      }
+    },
+    "lithuania": {
+      "name": "Lithuania",
+      "currency": "EUR",
+      "cities": {
+        "vilnius": {
+          "name": "Vilnius",
+          "meals": {
+            "cDay_1_30": {
+              "breakfast": 23.90,
+              "lunch": 50.25,
+              "dinner": 69.35,
+              "total": 143.50
+            },
+            "cDay_31_120": {
+              "breakfast": 17.93,
+              "lunch": 37.69,
+              "dinner": 52.01,
+              "total": 107.63
+            },
+            "cDay_121_plus": {
+              "breakfast": 11.95,
+              "lunch": 25.13,
+              "dinner": 34.68,
+              "total": 71.75
+            },
+            "pDay_1_30": {
+              "breakfast": 23.90,
+              "lunch": 50.25,
+              "dinner": 69.35,
+              "total": 143.50
+            },
+            "pDay_31_120": {
+              "breakfast": 17.93,
+              "lunch": 37.69,
+              "dinner": 52.01,
+              "total": 107.63
+            },
+            "pDay_121_plus": {
+              "breakfast": 11.95,
+              "lunch": 25.13,
+              "dinner": 34.68,
+              "total": 71.75
+            }
+          },
+          "accommodation": {
+            "cDay_1_30": 45.92,
+            "cDay_31_120": 34.44,
+            "cDay_121_plus": 34.44,
+            "pDay_1_30": 28.70,
+            "pDay_31_120": 21.53,
+            "pDay_121_plus": 21.53
+          },
+          "dailyTotal": {
+            "cDay_1_30": 189.42,
+            "cDay_31_120": 142.07,
+            "cDay_121_plus": 106.19,
+            "pDay_1_30": 172.20,
+            "pDay_31_120": 129.15,
+            "pDay_121_plus": 93.28
+          }
+        },
+        "other": {
+          "name": "Other cities in Lithuania",
+          "meals": {
+            "cDay_1_30": {
+              "breakfast": 19.12,
+              "lunch": 40.20,
+              "dinner": 55.48,
+              "total": 114.80
+            },
+            "cDay_31_120": {
+              "breakfast": 14.34,
+              "lunch": 30.15,
+              "dinner": 41.61,
+              "total": 86.10
+            },
+            "cDay_121_plus": {
+              "breakfast": 9.56,
+              "lunch": 20.10,
+              "dinner": 27.74,
+              "total": 57.40
+            },
+            "pDay_1_30": {
+              "breakfast": 19.12,
+              "lunch": 40.20,
+              "dinner": 55.48,
+              "total": 114.80
+            },
+            "pDay_31_120": {
+              "breakfast": 14.34,
+              "lunch": 30.15,
+              "dinner": 41.61,
+              "total": 86.10
+            },
+            "pDay_121_plus": {
+              "breakfast": 9.56,
+              "lunch": 20.10,
+              "dinner": 27.74,
+              "total": 57.40
+            }
+          },
+          "accommodation": {
+            "cDay_1_30": 36.74,
+            "cDay_31_120": 27.55,
+            "cDay_121_plus": 27.55,
+            "pDay_1_30": 22.96,
+            "pDay_31_120": 17.22,
+            "pDay_121_plus": 17.22
+          },
+          "dailyTotal": {
+            "cDay_1_30": 151.54,
+            "cDay_31_120": 113.65,
+            "cDay_121_plus": 84.95,
+            "pDay_1_30": 137.76,
+            "pDay_31_120": 103.32,
+            "pDay_121_plus": 74.62
+          }
+        }
+      }
+    },
+    "luxembourg": {
+      "name": "Luxembourg",
+      "currency": "EUR",
+      "oneRateForCountry": true,
+      "cities": {
+        "luxembourg": {
+          "name": "Luxembourg",
+          "meals": {
+            "cDay_1_30": {
+              "breakfast": 28.60,
+              "lunch": 59.35,
+              "dinner": 66.80,
+              "total": 154.75
+            },
+            "cDay_31_120": {
+              "breakfast": 21.45,
+              "lunch": 44.51,
+              "dinner": 50.10,
+              "total": 116.06
+            },
+            "cDay_121_plus": {
+              "breakfast": 14.30,
+              "lunch": 29.68,
+              "dinner": 33.40,
+              "total": 77.38
+            },
+            "pDay_1_30": {
+              "breakfast": 28.60,
+              "lunch": 59.35,
+              "dinner": 66.80,
+              "total": 154.75
+            },
+            "pDay_31_120": {
+              "breakfast": 21.45,
+              "lunch": 44.51,
+              "dinner": 50.10,
+              "total": 116.06
+            },
+            "pDay_121_plus": {
+              "breakfast": 14.30,
+              "lunch": 29.68,
+              "dinner": 33.40,
+              "total": 77.38
+            }
+          },
+          "accommodation": {
+            "cDay_1_30": 49.52,
+            "cDay_31_120": 37.14,
+            "cDay_121_plus": 37.14,
+            "pDay_1_30": 30.95,
+            "pDay_31_120": 23.21,
+            "pDay_121_plus": 23.21
+          },
+          "dailyTotal": {
+            "cDay_1_30": 204.27,
+            "cDay_31_120": 153.20,
+            "cDay_121_plus": 114.52,
+            "pDay_1_30": 185.70,
+            "pDay_31_120": 139.28,
+            "pDay_121_plus": 100.59
+          }
+        }
+      }
+    }
+  }
+}

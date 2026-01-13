@@ -1,0 +1,313 @@
+{
+  "metadata": {
+    "effectiveDate": "2025-10-01",
+    "version": "1.0",
+    "source": "NJC Travel Directive Appendix C & D",
+    "lastUpdated": "2025-10-30",
+    "notes": "All rates in Canadian Dollars (CAD). US rates are same as Canada but paid in USD."
+  },
+  "regions": {
+    "canada": {
+      "name": "Canada (Provinces)",
+      "currency": "CAD",
+      "meals": {
+        "breakfast": {
+          "rate100": 29.05,
+          "rate75": 21.80,
+          "rate50": 14.55
+        },
+        "lunch": {
+          "rate100": 29.60,
+          "rate75": 22.20,
+          "rate50": 14.80
+        },
+        "dinner": {
+          "rate100": 60.75,
+          "rate75": 45.55,
+          "rate50": 30.40
+        },
+        "total": {
+          "rate100": 119.40,
+          "rate75": 89.55,
+          "rate50": 59.75
+        }
+      },
+      "incidentals": {
+        "rate100": 17.30,
+        "rate75": 13.00
+      },
+      "privateAccommodation": {
+        "day1to120": 50.00,
+        "day121onward": 25.00
+      },
+      "dailyTotal": {
+        "rate100": 136.70,
+        "rate75": 102.55,
+        "rate50plus75": 72.75
+      }
+    },
+    "yukon": {
+      "name": "Yukon",
+      "currency": "CAD",
+      "meals": {
+        "breakfast": {
+          "rate100": 26.40,
+          "rate75": 19.80,
+          "rate50": 13.20
+        },
+        "lunch": {
+          "rate100": 33.50,
+          "rate75": 25.15,
+          "rate50": 16.75
+        },
+        "dinner": {
+          "rate100": 78.50,
+          "rate75": 58.90,
+          "rate50": 39.25
+        },
+        "total": {
+          "rate100": 138.40,
+          "rate75": 103.85,
+          "rate50": 69.20
+        }
+      },
+      "incidentals": {
+        "rate100": 17.30,
+        "rate75": 13.00
+      },
+      "privateAccommodation": {
+        "day1to120": 50.00,
+        "day121onward": 25.00
+      },
+      "dailyTotal": {
+        "rate100": 155.70,
+        "rate75": 116.85,
+        "rate50plus75": 82.20
+      }
+    },
+    "nwt": {
+      "name": "Northwest Territories",
+      "currency": "CAD",
+      "meals": {
+        "breakfast": {
+          "rate100": 30.05,
+          "rate75": 22.55,
+          "rate50": 15.05
+        },
+        "lunch": {
+          "rate100": 35.65,
+          "rate75": 26.75,
+          "rate50": 17.85
+        },
+        "dinner": {
+          "rate100": 76.05,
+          "rate75": 57.05,
+          "rate50": 38.05
+        },
+        "total": {
+          "rate100": 141.75,
+          "rate75": 106.35,
+          "rate50": 70.95
+        }
+      },
+      "incidentals": {
+        "rate100": 17.30,
+        "rate75": 13.00
+      },
+      "privateAccommodation": {
+        "day1to120": 50.00,
+        "day121onward": 25.00
+      },
+      "dailyTotal": {
+        "rate100": 159.05,
+        "rate75": 119.35,
+        "rate50plus75": 83.95
+      }
+    },
+    "nunavut": {
+      "name": "Nunavut",
+      "currency": "CAD",
+      "meals": {
+        "breakfast": {
+          "rate100": 35.05,
+          "rate75": 26.30,
+          "rate50": 17.55
+        },
+        "lunch": {
+          "rate100": 41.60,
+          "rate75": 31.20,
+          "rate50": 20.80
+        },
+        "dinner": {
+          "rate100": 100.45,
+          "rate75": 75.35,
+          "rate50": 50.25
+        },
+        "total": {
+          "rate100": 177.10,
+          "rate75": 132.85,
+          "rate50": 88.60
+        }
+      },
+      "incidentals": {
+        "rate100": 17.30,
+        "rate75": 13.00
+      },
+      "privateAccommodation": {
+        "day1to120": 50.00,
+        "day121onward": 25.00
+      },
+      "dailyTotal": {
+        "rate100": 194.40,
+        "rate75": 145.85,
+        "rate50plus75": 101.60
+      }
+    },
+    "usa": {
+      "name": "Continental USA",
+      "currency": "USD",
+      "meals": {
+        "breakfast": {
+          "rate100": 29.05,
+          "rate75": 21.80,
+          "rate50": 14.55
+        },
+        "lunch": {
+          "rate100": 29.60,
+          "rate75": 22.20,
+          "rate50": 14.80
+        },
+        "dinner": {
+          "rate100": 60.75,
+          "rate75": 45.55,
+          "rate50": 30.40
+        },
+        "total": {
+          "rate100": 119.40,
+          "rate75": 89.55,
+          "rate50": 59.75
+        }
+      },
+      "incidentals": {
+        "rate100": 17.30,
+        "rate75": 13.00
+      },
+      "privateAccommodation": {
+        "day1to120": 50.00,
+        "day121onward": 25.00
+      },
+      "dailyTotal": {
+        "rate100": 136.70,
+        "rate75": 102.55,
+        "rate50plus75": 72.75
+      }
+    },
+    "alaska": {
+      "name": "Alaska",
+      "currency": "USD",
+      "meals": {
+        "breakfast": {
+          "rate100": 26.40,
+          "rate75": 19.80,
+          "rate50": 13.20
+        },
+        "lunch": {
+          "rate100": 33.50,
+          "rate75": 25.15,
+          "rate50": 16.75
+        },
+        "dinner": {
+          "rate100": 78.50,
+          "rate75": 58.90,
+          "rate50": 39.25
+        },
+        "total": {
+          "rate100": 138.40,
+          "rate75": 103.85,
+          "rate50": 69.20
+        }
+      },
+      "incidentals": {
+        "rate100": 17.30,
+        "rate75": 13.00
+      },
+      "privateAccommodation": {
+        "day1to120": 50.00,
+        "day121onward": 25.00
+      },
+      "dailyTotal": {
+        "rate100": 155.70,
+        "rate75": 116.85,
+        "rate50plus75": 82.20
+      }
+    },
+    "international": {
+      "name": "International (Outside Canada/USA)",
+      "currency": "CAD",
+      "notes": "Rates vary by country. See Appendix D for specific country rates. These are average estimates.",
+      "meals": {
+        "breakfast": {
+          "rate100": 35.00,
+          "rate75": 26.25,
+          "rate50": 17.50
+        },
+        "lunch": {
+          "rate100": 40.00,
+          "rate75": 30.00,
+          "rate50": 20.00
+        },
+        "dinner": {
+          "rate100": 85.00,
+          "rate75": 63.75,
+          "rate50": 42.50
+        },
+        "total": {
+          "rate100": 160.00,
+          "rate75": 120.00,
+          "rate50": 80.00
+        }
+      },
+      "incidentals": {
+        "rate100": 20.00,
+        "rate75": 15.00
+      },
+      "privateAccommodation": {
+        "day1to120": 60.00,
+        "day121onward": 30.00
+      },
+      "dailyTotal": {
+        "rate100": 180.00,
+        "rate75": 135.00,
+        "rate50plus75": 95.00
+      }
+    }
+  },
+  "rateRules": {
+    "day1to30": "rate100",
+    "day31to120": "rate75",
+    "day121onward": "rate50",
+    "description": "75% of meal and incidental allowances paid starting day 31. 50% of meals paid starting day 121. Incidentals remain at 75% after day 31."
+  },
+  "specialRates": {
+    "hawaii": {
+      "reference": "See Appendix D for specific rates",
+      "currency": "USD"
+    },
+    "guam": {
+      "reference": "See Appendix D for specific rates",
+      "currency": "USD"
+    },
+    "puertoRico": {
+      "reference": "See Appendix D for specific rates",
+      "currency": "USD"
+    },
+    "virginIslands": {
+      "reference": "See Appendix D for specific rates",
+      "currency": "USD"
+    },
+    "northernMarianas": {
+      "reference": "See Appendix D for specific rates",
+      "currency": "USD"
+    }
+  }
+}

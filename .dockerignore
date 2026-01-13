@@ -1,0 +1,7 @@
+node_modules/
+database/travel_rates.db
+.env
+npm-debug.log
+.DS_Store
+*.log
+.vscode/

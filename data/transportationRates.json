@@ -1,0 +1,194 @@
+{
+  "metadata": {
+    "effectiveDate": "2025-10-01",
+    "version": "1.0",
+    "source": "NJC Travel Directive Appendix B",
+    "lastUpdated": "2025-10-30",
+    "notes": "Kilometric rates for personal vehicle use. All rates in Canadian Dollars (CAD)."
+  },
+  "kilometricRates": {
+    "description": "Rates per kilometre for use of personal vehicle on government business",
+    "modules": {
+      "module1and2": {
+        "name": "Modules 1 and 2 - Local and day travel",
+        "rates": {
+          "perKm": 0.68,
+          "notes": "For travel within headquarters area or day trips"
+        }
+      },
+      "module3": {
+        "name": "Module 3 - Travel in Canada and Continental USA with overnight stay",
+        "rates": {
+          "tier1": {
+            "description": "First 5,000 km per year",
+            "perKm": 0.68
+          },
+          "tier2": {
+            "description": "Over 5,000 km per year",
+            "perKm": 0.58
+          }
+        }
+      }
+    },
+    "additionalExpenses": {
+      "parking": {
+        "description": "Reasonable parking expenses",
+        "reimbursable": true,
+        "requiresReceipt": true
+      },
+      "tolls": {
+        "description": "Highway tolls and ferry fees",
+        "reimbursable": true,
+        "requiresReceipt": true
+      },
+      "tunnel": {
+        "description": "Tunnel fees",
+        "reimbursable": true,
+        "requiresReceipt": true
+      }
+    }
+  },
+  "trainTravel": {
+    "description": "Rail travel within Canada and USA",
+    "policy": {
+      "domesticCanada": {
+        "class": "Economy class",
+        "provider": "VIA Rail or equivalent",
+        "notes": "Business class may be authorized with approval"
+      },
+      "usa": {
+        "class": "Economy class",
+        "provider": "Amtrak or equivalent",
+        "notes": "Business class may be authorized with approval"
+      },
+      "businessClassCriteria": {
+        "duration": "Extended travel periods",
+        "workRequirement": "Need to work during travel",
+        "authorization": "Requires prior approval"
+      }
+    },
+    "commonRoutes": {
+      "ottawaToMontreal": {
+        "distance": 200,
+        "estimatedCost": {
+          "economy": 45,
+          "business": 90
+        },
+        "provider": "VIA Rail"
+      },
+      "ottawaToToronto": {
+        "distance": 450,
+        "estimatedCost": {
+          "economy": 85,
+          "business": 170
+        },
+        "provider": "VIA Rail"
+      },
+      "torontoToMontreal": {
+        "distance": 550,
+        "estimatedCost": {
+          "economy": 95,
+          "business": 190
+        },
+        "provider": "VIA Rail"
+      },
+      "vancouverToSeattle": {
+        "distance": 230,
+        "estimatedCost": {
+          "economy": 55,
+          "business": 110
+        },
+        "provider": "Amtrak Cascades"
+      }
+    }
+  },
+  "comparativeAnalysis": {
+    "description": "When choosing transportation mode, consider:",
+    "factors": [
+      "Total cost (transportation + time)",
+      "Travel duration",
+      "Accommodation needs",
+      "Meal allowances during travel",
+      "Work productivity during travel",
+      "Environmental impact"
+    ],
+    "costComparison": {
+      "ottawaToToronto": {
+        "flight": {
+          "cost": 250,
+          "duration": "1 hour flight + 2 hours airport",
+          "notes": "Fastest option"
+        },
+        "train": {
+          "cost": 85,
+          "duration": "4-5 hours",
+          "notes": "Can work during travel"
+        },
+        "vehicle": {
+          "cost": 306,
+          "calculation": "450 km × $0.68/km",
+          "duration": "4.5-5 hours",
+          "notes": "Plus parking, tolls"
+        }
+      }
+    }
+  },
+  "vehicleInsurance": {
+    "description": "Insurance coverage for personal vehicles on government business",
+    "coverage": {
+      "liability": "Covered by government if employee has minimum provincial insurance",
+      "collision": "Employee responsible for deductible",
+      "comprehensive": "Employee responsible for deductible"
+    },
+    "requirements": {
+      "minimumInsurance": "Must maintain minimum provincial/territorial insurance",
+      "proof": "May be required to provide proof of insurance",
+      "condition": "Vehicle must be in safe operating condition"
+    }
+  },
+  "calculationExamples": {
+    "example1": {
+      "scenario": "Day trip Ottawa to Kingston (180 km each way)",
+      "calculation": {
+        "totalDistance": 360,
+        "rate": 0.68,
+        "totalCost": 244.80,
+        "formula": "360 km × $0.68/km = $244.80"
+      }
+    },
+    "example2": {
+      "scenario": "Multi-day trip with 2,000 km total",
+      "calculation": {
+        "totalDistance": 2000,
+        "rate": 0.68,
+        "totalCost": 1360.00,
+        "formula": "2,000 km × $0.68/km = $1,360.00",
+        "notes": "All at tier 1 rate (under 5,000 km/year)"
+      }
+    },
+    "example3": {
+      "scenario": "Trip after already driving 5,500 km this year, new trip is 1,000 km",
+      "calculation": {
+        "totalDistance": 1000,
+        "rate": 0.58,
+        "totalCost": 580.00,
+        "formula": "1,000 km × $0.58/km = $580.00",
+        "notes": "At tier 2 rate (over 5,000 km/year)"
+      }
+    }
+  },
+  "specialConsiderations": {
+    "winterTravel": {
+      "recommendation": "Consider safety and weather conditions",
+      "allowances": "Additional travel time may be justified"
+    },
+    "remoteLocations": {
+      "recommendation": "Personal vehicle may be necessary if no public transit",
+      "considerations": "Check accommodation parking availability"
+    },
+    "multiplePassengers": {
+      "carPooling": "Kilometric rate covers multiple passengers",
+      "efficiency": "Cost-effective for group travel"
+    }
+  }
+}

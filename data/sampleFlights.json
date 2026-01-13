@@ -1,0 +1,46 @@
+[
+  {
+    "price": 1295.00,
+    "currency": "CAD",
+    "duration": "PT16H10M",
+    "durationHours": 16.2,
+    "businessClassEligible": true,
+    "stops": 1,
+    "carrier": "AC",
+    "departureTime": "2025-11-15T08:00:00",
+    "arrivalTime": "2025-11-15T16:10:00"
+  },
+  {
+    "price": 1420.50,
+    "currency": "CAD",
+    "duration": "PT14H25M",
+    "durationHours": 14.4,
+    "businessClassEligible": true,
+    "stops": 2,
+    "carrier": "BA",
+    "departureTime": "2025-11-15T09:30:00",
+    "arrivalTime": "2025-11-15T16:55:00"
+  },
+  {
+    "price": 980.25,
+    "currency": "CAD",
+    "duration": "PT20H05M",
+    "durationHours": 20.1,
+    "businessClassEligible": true,
+    "stops": 2,
+    "carrier": "QF",
+    "departureTime": "2025-11-15T07:15:00",
+    "arrivalTime": "2025-11-15T16:20:00"
+  },
+  {
+    "price": 875.75,
+    "currency": "CAD",
+    "duration": "PT18H40M",
+    "durationHours": 18.7,
+    "businessClassEligible": true,
+    "stops": 3,
+    "carrier": "SQ",
+    "departureTime": "2025-11-15T06:45:00",
+    "arrivalTime": "2025-11-15T15:25:00"
+  }
+]

@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Validation - Government Travel Estimator</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .validation-page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .validation-header {
+            background: linear-gradient(135deg, #2c5f8d, #4a90c5);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .validation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .db-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid;
+        }
+        
+        .db-card.status-ok {
+            border-left-color: #27ae60;
+        }
+        
+        .db-card.status-warning {
+            border-left-color: #ffc107;
+        }
+        
+        .db-card.status-error {
+            border-left-color: #dc3545;
+        }
+        
+        .db-card h3 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .status-ok .status-badge {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-warning .status-badge {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-error .status-badge {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #666;
+        }
+        
+        .info-value {
+            color: #2c3e50;
+        }
+        
+        .action-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #2c5f8d;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #1e4266;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        
+        .validation-summary {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-card.ok {
+            background: #d4edda;
+        }
+        
+        .stat-card.warning {
+            background: #fff3cd;
+        }
+        
+        .stat-card.error {
+            background: #f8d7da;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .recommendations {
+            background: #e7f3ff;
+            border-left: 4px solid #2c5f8d;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .recommendations h3 {
+            color: #2c5f8d;
+            margin-bottom: 10px;
+        }
+        
+        .recommendations ul {
+            margin-left: 20px;
+        }
+        
+        .recommendations li {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="validation-page">
+        <div class="validation-header">
+            <h1>🔍 Database Validation Dashboard</h1>
+            <p>Monitor and validate rate database integrity and currency</p>
+        </div>
+
+        <div class="validation-summary">
+            <h2>Validation Summary</h2>
+            <div class="summary-stats" id="summaryStats">
+                <div class="stat-card ok">
+                    <div class="stat-number" id="okCount">-</div>
+                    <div class="stat-label">✅ Up to Date</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-number" id="warningCount">-</div>
+                    <div class="stat-label">⚠️ Needs Attention</div>
+                </div>
+                <div class="stat-card error">
+                    <div class="stat-number" id="errorCount">-</div>
+                    <div class="stat-label">❌ Outdated</div>
+                </div>
+            </div>
+            <div id="lastValidation" style="margin-top: 15px; color: #666; font-size: 0.9rem;"></div>
+        </div>
+
+        <div class="validation-grid" id="validationGrid">
+            <!-- Database cards will be inserted here -->
+        </div>
+
+        <div class="recommendations" id="recommendations" style="display: none;">
+            <h3>📋 Recommended Actions</h3>
+            <ul id="recommendationList"></ul>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="refreshValidation()">🔄 Refresh Validation</button>
+            <button class="btn btn-secondary" onclick="window.location.href='index.html'">← Back to Estimator</button>
+            <button class="btn btn-secondary" onclick="exportValidationReport()">📄 Export Report</button>
+        </div>
+    </div>
+
+    <script>
+        let perDiemRatesDB = null;
+        let accommodationRatesDB = null;
+        let transportationRatesDB = null;
+
+        // Load databases and validate
+        async function loadAndValidate() {
+            try {
+                const [perDiemResponse, accommodationResponse, transportationResponse] = await Promise.all([
+                    fetch('data/perDiemRates.json'),
+                    fetch('data/accommodationRates.json'),
+                    fetch('data/transportationRates.json')
+                ]);
+                
+                if (!perDiemResponse.ok || !accommodationResponse.ok || !transportationResponse.ok) {
+                    throw new Error('Failed to load rate databases');
+                }
+                
+                perDiemRatesDB = await perDiemResponse.json();
+                accommodationRatesDB = await accommodationResponse.json();
+                transportationRatesDB = await transportationResponse.json();
+                
+                validateAllDatabases();
+            } catch (error) {
+                console.error('Error loading databases:', error);
+                alert('Error loading databases: ' + error.message);
+            }
+        }
+
+        function validateAllDatabases() {
+            const today = new Date();
+            const results = [];
+            let okCount = 0;
+            let warningCount = 0;
+            let errorCount = 0;
+            const recommendations = [];
+
+            // Validate Per Diem Rates
+            if (perDiemRatesDB && perDiemRatesDB.metadata) {
+                const result = validateDatabase(perDiemRatesDB, 'Per Diem Rates', 12);
+                results.push(result);
+                if (result.status === 'ok') okCount++;
+                else if (result.status === 'warning') warningCount++;
+                else errorCount++;
+                
+                if (result.recommendations) {
+                    recommendations.push(...result.recommendations);
+                }
+            }
+
+            // Validate Accommodation Rates
+            if (accommodationRatesDB && accommodationRatesDB.metadata) {
+                const result = validateDatabase(accommodationRatesDB, 'Accommodation Rates', 6);
+                results.push(result);
+                if (result.status === 'ok') okCount++;
+                else if (result.status === 'warning') warningCount++;
+                else errorCount++;
+                
+                if (result.recommendations) {
+                    recommendations.push(...result.recommendations);
+                }
+            }
+
+            // Validate Transportation Rates
+            if (transportationRatesDB && transportationRatesDB.metadata) {
+                const result = validateDatabase(transportationRatesDB, 'Transportation Rates', 12);
+                results.push(result);
+                if (result.status === 'ok') okCount++;
+                else if (result.status === 'warning') warningCount++;
+                else errorCount++;
+                
+                if (result.recommendations) {
+                    recommendations.push(...result.recommendations);
+                }
+            }
+
+            // Update UI
+            displayValidationResults(results, okCount, warningCount, errorCount, recommendations);
+        }
+
+        function validateDatabase(db, name, maxMonthsOld) {
+            const today = new Date();
+            const effectiveDate = new Date(db.metadata.effectiveDate);
+            const lastUpdated = new Date(db.metadata.lastUpdated);
+            const monthsSinceUpdate = (today - lastUpdated) / (1000 * 60 * 60 * 24 * 30);
+            
+            let status = 'ok';
+            let message = 'Database is current';
+            const recommendations = [];
+            
+            if (monthsSinceUpdate > maxMonthsOld) {
+                status = 'error';
+                message = `Database is outdated (${Math.floor(monthsSinceUpdate)} months old)`;
+                recommendations.push(`Update ${name} immediately - rates are likely outdated`);
+                recommendations.push(`Check official NJC sources for current rates`);
+            } else if (monthsSinceUpdate > maxMonthsOld * 0.85) {
+                status = 'warning';
+                message = `Database approaching update cycle (${Math.floor(monthsSinceUpdate)} months old)`;
+                recommendations.push(`Plan to update ${name} soon`);
+            }
+
+            return {
+                name,
+                status,
+                message,
+                effectiveDate: db.metadata.effectiveDate,
+                lastUpdated: db.metadata.lastUpdated,
+                version: db.metadata.version,
+                source: db.metadata.source,
+                monthsSinceUpdate: Math.floor(monthsSinceUpdate * 10) / 10,
+                recommendations
+            };
+        }
+
+        function displayValidationResults(results, okCount, warningCount, errorCount, recommendations) {
+            // Update summary stats
+            document.getElementById('okCount').textContent = okCount;
+            document.getElementById('warningCount').textContent = warningCount;
+            document.getElementById('errorCount').textContent = errorCount;
+            document.getElementById('lastValidation').textContent = `Last validated: ${new Date().toLocaleString()}`;
+
+            // Display database cards
+            const grid = document.getElementById('validationGrid');
+            grid.innerHTML = '';
+            
+            results.forEach(result => {
+                const card = document.createElement('div');
+                card.className = `db-card status-${result.status}`;
+                
+                let statusText = result.status === 'ok' ? '✅ Current' : 
+                                result.status === 'warning' ? '⚠️ Attention Needed' : 
+                                '❌ Outdated';
+                
+                card.innerHTML = `
+                    <h3>${result.name}</h3>
+                    <span class="status-badge">${statusText}</span>
+                    <p style="margin-bottom: 15px; color: #666;">${result.message}</p>
+                    
+                    <div class="info-row">
+                        <span class="info-label">Effective Date:</span>
+                        <span class="info-value">${result.effectiveDate}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Last Updated:</span>
+                        <span class="info-value">${result.lastUpdated}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Months Old:</span>
+                        <span class="info-value">${result.monthsSinceUpdate}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Version:</span>
+                        <span class="info-value">${result.version}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Source:</span>
+                        <span class="info-value">${result.source}</span>
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+            });
+
+            // Display recommendations
+            if (recommendations.length > 0) {
+                const recDiv = document.getElementById('recommendations');
+                const recList = document.getElementById('recommendationList');
+                recList.innerHTML = '';
+                
+                recommendations.forEach(rec => {
+                    const li = document.createElement('li');
+                    li.textContent = rec;
+                    recList.appendChild(li);
+                });
+                
+                recDiv.style.display = 'block';
+            } else {
+                document.getElementById('recommendations').style.display = 'none';
+            }
+        }
+
+        function refreshValidation() {
+            loadAndValidate();
+        }
+
+        function exportValidationReport() {
+            const today = new Date().toISOString().split('T')[0];
+            let report = `Government Travel Estimator - Database Validation Report\n`;
+            report += `Generated: ${new Date().toLocaleString()}\n`;
+            report += `\n========================================\n\n`;
+            
+            [perDiemRatesDB, accommodationRatesDB, transportationRatesDB].forEach((db, i) => {
+                const names = ['Per Diem Rates', 'Accommodation Rates', 'Transportation Rates'];
+                if (db && db.metadata) {
+                    report += `${names[i]}:\n`;
+                    report += `  Effective Date: ${db.metadata.effectiveDate}\n`;
+                    report += `  Last Updated: ${db.metadata.lastUpdated}\n`;
+                    report += `  Version: ${db.metadata.version}\n`;
+                    report += `  Source: ${db.metadata.source}\n`;
+                    report += `\n`;
+                }
+            });
+            
+            // Create and download file
+            const blob = new Blob([report], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `validation-report-${today}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Load on page ready
+        document.addEventListener('DOMContentLoaded', loadAndValidate);
+    </script>
+</body>
+</html>

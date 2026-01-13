@@ -1,0 +1,363 @@
+{
+  "metadata": {
+    "effectiveDate": "2025-10-30",
+    "version": "1.0",
+    "source": "Government Accommodation Directory (PWGSC)",
+    "lastUpdated": "2025-10-30",
+    "notes": "Sample rates for common Canadian cities. Actual rates should be verified at https://rehelv-acrd.tpsgc-pwgsc.gc.ca/lth-crl-eng.aspx"
+  },
+  "cities": {
+    "ottawa": {
+      "name": "Ottawa, ON",
+      "province": "Ontario",
+      "region": "canada",
+      "standardRate": 165.00,
+      "maxRate": 200.00,
+      "currency": "CAD",
+      "notes": "National Capital Region"
+    },
+    "toronto": {
+      "name": "Toronto, ON",
+      "province": "Ontario",
+      "region": "canada",
+      "standardRate": 180.00,
+      "maxRate": 220.00,
+      "currency": "CAD",
+      "notes": "Major urban center"
+    },
+    "montreal": {
+      "name": "Montreal, QC",
+      "province": "Quebec",
+      "region": "canada",
+      "standardRate": 170.00,
+      "maxRate": 210.00,
+      "currency": "CAD",
+      "notes": "Major urban center"
+    },
+    "vancouver": {
+      "name": "Vancouver, BC",
+      "province": "British Columbia",
+      "region": "canada",
+      "standardRate": 190.00,
+      "maxRate": 240.00,
+      "currency": "CAD",
+      "notes": "Major urban center, high cost area"
+    },
+    "calgary": {
+      "name": "Calgary, AB",
+      "province": "Alberta",
+      "region": "canada",
+      "standardRate": 160.00,
+      "maxRate": 195.00,
+      "currency": "CAD",
+      "notes": "Major urban center"
+    },
+    "edmonton": {
+      "name": "Edmonton, AB",
+      "province": "Alberta",
+      "region": "canada",
+      "standardRate": 155.00,
+      "maxRate": 190.00,
+      "currency": "CAD",
+      "notes": "Major urban center"
+    },
+    "winnipeg": {
+      "name": "Winnipeg, MB",
+      "province": "Manitoba",
+      "region": "canada",
+      "standardRate": 140.00,
+      "maxRate": 175.00,
+      "currency": "CAD",
+      "notes": "Urban center"
+    },
+    "halifax": {
+      "name": "Halifax, NS",
+      "province": "Nova Scotia",
+      "region": "canada",
+      "standardRate": 150.00,
+      "maxRate": 185.00,
+      "currency": "CAD",
+      "notes": "Regional center"
+    },
+    "quebec": {
+      "name": "Quebec City, QC",
+      "province": "Quebec",
+      "region": "canada",
+      "standardRate": 155.00,
+      "maxRate": 190.00,
+      "currency": "CAD",
+      "notes": "Provincial capital"
+    },
+    "victoria": {
+      "name": "Victoria, BC",
+      "province": "British Columbia",
+      "region": "canada",
+      "standardRate": 175.00,
+      "maxRate": 215.00,
+      "currency": "CAD",
+      "notes": "Provincial capital"
+    },
+    "whitehorse": {
+      "name": "Whitehorse, YT",
+      "province": "Yukon",
+      "region": "yukon",
+      "standardRate": 185.00,
+      "maxRate": 230.00,
+      "currency": "CAD",
+      "notes": "Territorial capital, limited availability"
+    },
+    "yellowknife": {
+      "name": "Yellowknife, NT",
+      "province": "Northwest Territories",
+      "region": "nwt",
+      "standardRate": 210.00,
+      "maxRate": 270.00,
+      "currency": "CAD",
+      "notes": "Territorial capital, high cost area, limited availability"
+    },
+    "iqaluit": {
+      "name": "Iqaluit, NU",
+      "province": "Nunavut",
+      "region": "nunavut",
+      "standardRate": 280.00,
+      "maxRate": 350.00,
+      "currency": "CAD",
+      "notes": "Territorial capital, very high cost area, very limited availability"
+    },
+    "newyork": {
+      "name": "New York, NY",
+      "state": "New York",
+      "region": "usa",
+      "standardRate": 250.00,
+      "maxRate": 350.00,
+      "currency": "USD",
+      "notes": "Major metropolitan area, very high cost"
+    },
+    "washington": {
+      "name": "Washington, DC",
+      "state": "District of Columbia",
+      "region": "usa",
+      "standardRate": 220.00,
+      "maxRate": 300.00,
+      "currency": "USD",
+      "notes": "Capital city, high cost area"
+    },
+    "chicago": {
+      "name": "Chicago, IL",
+      "state": "Illinois",
+      "region": "usa",
+      "standardRate": 180.00,
+      "maxRate": 240.00,
+      "currency": "USD",
+      "notes": "Major metropolitan area"
+    },
+    "losangeles": {
+      "name": "Los Angeles, CA",
+      "state": "California",
+      "region": "usa",
+      "standardRate": 200.00,
+      "maxRate": 280.00,
+      "currency": "USD",
+      "notes": "Major metropolitan area, high cost"
+    },
+    "sanfrancisco": {
+      "name": "San Francisco, CA",
+      "state": "California",
+      "region": "usa",
+      "standardRate": 240.00,
+      "maxRate": 340.00,
+      "currency": "USD",
+      "notes": "Major metropolitan area, very high cost"
+    },
+    "seattle": {
+      "name": "Seattle, WA",
+      "state": "Washington",
+      "region": "usa",
+      "standardRate": 195.00,
+      "maxRate": 260.00,
+      "currency": "USD",
+      "notes": "Major metropolitan area"
+    },
+    "boston": {
+      "name": "Boston, MA",
+      "state": "Massachusetts",
+      "region": "usa",
+      "standardRate": 210.00,
+      "maxRate": 280.00,
+      "currency": "USD",
+      "notes": "Major metropolitan area, high cost"
+    },
+    "anchorage": {
+      "name": "Anchorage, AK",
+      "state": "Alaska",
+      "region": "alaska",
+      "standardRate": 180.00,
+      "maxRate": 240.00,
+      "currency": "USD",
+      "notes": "Limited availability, seasonal variations"
+    }
+  },
+  "defaults": {
+    "canada": {
+      "standardRate": 150.00,
+      "maxRate": 185.00,
+      "currency": "CAD"
+    },
+    "yukon": {
+      "standardRate": 185.00,
+      "maxRate": 230.00,
+      "currency": "CAD"
+    },
+    "nwt": {
+      "standardRate": 210.00,
+      "maxRate": 270.00,
+      "currency": "CAD"
+    },
+    "nunavut": {
+      "standardRate": 280.00,
+      "maxRate": 350.00,
+      "currency": "CAD"
+    },
+    "usa": {
+      "standardRate": 150.00,
+      "maxRate": 200.00,
+      "currency": "USD"
+    },
+    "alaska": {
+      "standardRate": 180.00,
+      "maxRate": 240.00,
+      "currency": "USD"
+    },
+    "international": {
+      "standardRate": 200.00,
+      "maxRate": 300.00,
+      "currency": "CAD",
+      "notes": "Varies significantly by country and city"
+    }
+  },
+  "internationalCities": {
+    "london": {
+      "name": "London, UK",
+      "country": "United Kingdom",
+      "region": "international",
+      "standardRate": 280.00,
+      "maxRate": 380.00,
+      "currency": "CAD",
+      "notes": "High cost city, convert from GBP"
+    },
+    "paris": {
+      "name": "Paris, France",
+      "country": "France",
+      "region": "international",
+      "standardRate": 260.00,
+      "maxRate": 350.00,
+      "currency": "CAD",
+      "notes": "High cost city, convert from EUR"
+    },
+    "tokyo": {
+      "name": "Tokyo, Japan",
+      "country": "Japan",
+      "region": "international",
+      "standardRate": 240.00,
+      "maxRate": 340.00,
+      "currency": "CAD",
+      "notes": "High cost city, convert from JPY"
+    },
+    "beijing": {
+      "name": "Beijing, China",
+      "country": "China",
+      "region": "international",
+      "standardRate": 180.00,
+      "maxRate": 250.00,
+      "currency": "CAD",
+      "notes": "Convert from CNY"
+    },
+    "sydney": {
+      "name": "Sydney, Australia",
+      "country": "Australia",
+      "region": "international",
+      "standardRate": 220.00,
+      "maxRate": 300.00,
+      "currency": "CAD",
+      "notes": "High cost city, convert from AUD"
+    },
+    "dubai": {
+      "name": "Dubai, UAE",
+      "country": "United Arab Emirates",
+      "region": "international",
+      "standardRate": 200.00,
+      "maxRate": 280.00,
+      "currency": "CAD",
+      "notes": "Convert from AED"
+    },
+    "brussels": {
+      "name": "Brussels, Belgium",
+      "country": "Belgium",
+      "region": "international",
+      "standardRate": 210.00,
+      "maxRate": 280.00,
+      "currency": "CAD",
+      "notes": "EU headquarters, convert from EUR"
+    },
+    "geneva": {
+      "name": "Geneva, Switzerland",
+      "country": "Switzerland",
+      "region": "international",
+      "standardRate": 320.00,
+      "maxRate": 450.00,
+      "currency": "CAD",
+      "notes": "Very high cost city, convert from CHF"
+    },
+    "reykjavik": {
+      "name": "Reykjavik, Iceland",
+      "country": "Iceland",
+      "region": "international",
+      "standardRate": 240.00,
+      "maxRate": 320.00,
+      "currency": "CAD",
+      "notes": "High cost Nordic city, convert from ISK"
+    },
+    "oslo": {
+      "name": "Oslo, Norway",
+      "country": "Norway",
+      "region": "international",
+      "standardRate": 260.00,
+      "maxRate": 350.00,
+      "currency": "CAD",
+      "notes": "High cost Nordic city, convert from NOK"
+    },
+    "stockholm": {
+      "name": "Stockholm, Sweden",
+      "country": "Sweden",
+      "region": "international",
+      "standardRate": 230.00,
+      "maxRate": 310.00,
+      "currency": "CAD",
+      "notes": "High cost Nordic city, convert from SEK"
+    },
+    "copenhagen": {
+      "name": "Copenhagen, Denmark",
+      "country": "Denmark",
+      "region": "international",
+      "standardRate": 250.00,
+      "maxRate": 330.00,
+      "currency": "CAD",
+      "notes": "High cost Nordic city, convert from DKK"
+    },
+    "helsinki": {
+      "name": "Helsinki, Finland",
+      "country": "Finland",
+      "region": "international",
+      "standardRate": 220.00,
+      "maxRate": 290.00,
+      "currency": "CAD",
+      "notes": "High cost Nordic city, convert from EUR"
+    }
+  },
+  "rateNotes": {
+    "standardRate": "Typical government-approved hotel rate",
+    "maxRate": "Maximum allowable without additional authorization",
+    "exceedingMax": "Rates exceeding max require justification and approval",
+    "verification": "Always verify current rates at government accommodation directory before booking"
+  }
+}
