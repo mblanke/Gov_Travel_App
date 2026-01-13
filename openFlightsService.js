@@ -264,29 +264,30 @@ async function generateFlights(originCode, destCode, departureDate) {
 
     selectedAirlines.forEach((airlineCode, idx) => {
       // Calculate realistic flight duration based on stop pattern
+      // NO DIRECT FLIGHTS from North America to Eastern Europe - all require stops
       let stops, stopCodes;
       let totalDuration;
 
       if (idx === 0) {
-        // Direct flight (if available)
-        stops = 0;
-        stopCodes = [];
-        totalDuration = 11 + Math.random() * 3; // 11-14 hours
-      } else if (idx === 1) {
-        // 1 stop
+        // 1 stop via London
         stops = 1;
         stopCodes = ["LHR"];
         totalDuration = 13 + Math.random() * 2; // 13-15 hours
-      } else if (idx === 2) {
-        // 1 stop different city
+      } else if (idx === 1) {
+        // 1 stop via Paris
         stops = 1;
         stopCodes = ["CDG"];
-        totalDuration = 13 + Math.random() * 2;
+        totalDuration = 13 + Math.random() * 2; // 13-15 hours
+      } else if (idx === 2) {
+        // 1 stop via Frankfurt
+        stops = 1;
+        stopCodes = ["FRA"];
+        totalDuration = 14 + Math.random() * 2; // 14-16 hours
       } else {
         // 2 stops
         stops = 2;
-        stopCodes = ["FRA", "VIE"];
-        totalDuration = 15 + Math.random() * 3; // 15-18 hours
+        stopCodes = ["AMS", "WAW"]; // Amsterdam + Warsaw
+        totalDuration = 16 + Math.random() * 2; // 16-18 hours
       }
 
       // Generate realistic departure times (6am-10am)

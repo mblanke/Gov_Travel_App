@@ -81,12 +81,17 @@ app.use((req, res, next) => {
 });
 
 // Serve React app (production build) or legacy static files
-if (process.env.NODE_ENV === 'production' && require('fs').existsSync(path.join(__dirname, 'dist', 'client'))) {
+if (
+  process.env.NODE_ENV === "production" &&
+  require("fs").existsSync(path.join(__dirname, "dist", "client"))
+) {
   // Serve React production build
-  app.use(express.static(path.join(__dirname, 'dist', 'client'), {
-    maxAge: '1d',
-    etag: true,
-  }));
+  app.use(
+    express.static(path.join(__dirname, "dist", "client"), {
+      maxAge: "1d",
+      etag: true,
+    })
+  );
 } else {
   // Serve legacy static files from the current directory
   app.use(
