@@ -43,7 +43,7 @@ const NJC_RATES = {
     "Sherbrooke": { perDiem: 79.00, accommodation: 155.00, tier: 2 },
     "Saguenay": { perDiem: 76.00, accommodation: 148.00, tier: 2 },
     "Levis": { perDiem: 82.00, accommodation: 168.00, tier: 2 },
-    "Trois-Rivieres": { perDiem: 77.00, accommodation: 150.00, tier: 2 },
+    "Trois-Rivières": { perDiem: 77.00, accommodation: 150.00, tier: 2 },
     "Terrebonne": { perDiem: 84.00, accommodation: 172.00, tier: 2 },
     
     // BC Cities - Tier 2

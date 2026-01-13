@@ -173,7 +173,7 @@ const CITIES = [
     { name: "Sherbrooke", province: "QC", country: "Canada", code: "YSC" },
     { name: "Saguenay", province: "QC", country: "Canada", code: "YBG" },
     { name: "Levis", province: "QC", country: "Canada", code: "YQB" },
-    { name: "Trois-Rivieres", province: "QC", country: "Canada", code: "YRQ" },
+    { name: "Trois-Rivières", province: "QC", country: "Canada", code: "YRQ" },
     { name: "Terrebonne", province: "QC", country: "Canada", code: "YUL" },
     { name: "Saint-Jean-sur-Richelieu", province: "QC", country: "Canada", code: "YUL" },
     { name: "Repentigny", province: "QC", country: "Canada", code: "YUL" },
