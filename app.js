@@ -18,7 +18,7 @@ function initializeApp() {
     document.getElementById('returnDate').setAttribute('min', today);
     
     console.log('Government Travel Cost Estimator initialized');
-    console.log(`Loaded ${CITIES.length} cities`);
+    console.log(`Loaded ${CITIES.length} Canadian cities`);
 }
 
 function populateCityList() {
