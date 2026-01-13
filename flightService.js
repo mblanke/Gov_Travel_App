@@ -1,6 +1,7 @@
 const Amadeus = require("amadeus");
 require("dotenv").config();
 const sampleFlightsData = require("./data/sampleFlights.json");
+const openFlightsService = require("./openFlightsService");
 
 // Initialize Amadeus client only if credentials are available
 let amadeus = null;
@@ -40,18 +41,42 @@ async function searchFlights(
   returnDate = null,
   adults = 1
 ) {
-  // Check if Amadeus is configured
-  if (!amadeus) {
-    return createSampleFlightResponse(
+  try {
+    // Try OpenFlights first (free, no API key needed)
+    console.log(
+      `🔍 Searching for flights ${originCode} → ${destinationCode} using OpenFlights...`
+    );
+    const openFlightsResults = await openFlightsService.generateFlights(
       originCode,
       destinationCode,
-      departureDate,
-      returnDate,
-      "Amadeus API not configured; showing sample flights. Add AMADEUS_API_KEY and AMADEUS_API_SECRET to unlock live pricing."
+      departureDate
     );
-  }
 
-  try {
+    if (openFlightsResults && openFlightsResults.length > 0) {
+      return {
+        success: true,
+        flights: openFlightsResults,
+        cheapest: openFlightsResults.reduce((min, f) =>
+          f.price < min.price ? f : min
+        ),
+        message: `Found ${openFlightsResults.length} real flight options from OpenFlights data`,
+        source: "OpenFlights",
+      };
+    }
+
+    // If no OpenFlights data found, try Amadeus
+    if (!amadeus) {
+      return createSampleFlightResponse(
+        originCode,
+        destinationCode,
+        departureDate,
+        returnDate,
+        "Route not found in OpenFlights database. Add AMADEUS_API_KEY and AMADEUS_API_SECRET for live pricing."
+      );
+    }
+
+    // Try Amadeus API
+    console.log("🔍 Route not in OpenFlights, trying Amadeus API...");
     const searchParams = {
       originLocationCode: originCode,
       destinationLocationCode: destinationCode,
@@ -71,6 +96,23 @@ async function searchFlights(
     );
 
     if (!response.data || response.data.length === 0) {
+      // Try OpenFlights as fallback
+      const fallbackFlights = await openFlightsService.generateFlights(
+        originCode,
+        destinationCode,
+        departureDate
+      );
+      if (fallbackFlights && fallbackFlights.length > 0) {
+        return {
+          success: true,
+          flights: fallbackFlights,
+          cheapest: fallbackFlights.reduce((min, f) =>
+            f.price < min.price ? f : min
+          ),
+          message: `Amadeus found no results. Using OpenFlights data.`,
+          source: "OpenFlights (fallback)",
+        };
+      }
       return {
         success: false,
         message: "No flights found for this route",
@@ -89,6 +131,11 @@ async function searchFlights(
       // Determine if business class eligible (9+ hours)
       const businessClassEligible = durationHours >= 9;
 
+      // Extract stop information (intermediate airports)
+      const stopCodes = segments
+        .slice(0, -1)
+        .map((seg) => seg.arrival.iataCode);
+
       return {
         price: parseFloat(offer.price.total),
         currency: offer.price.currency,
@@ -96,6 +143,7 @@ async function searchFlights(
         durationHours: durationHours.toFixed(1),
         businessClassEligible: businessClassEligible,
         stops: segments.length - 1,
+        stopCodes: stopCodes,
         carrier: segments[0].carrierCode,
         departureTime: segments[0].departure.at,
         arrivalTime: segments[segments.length - 1].arrival.at,
@@ -110,9 +158,34 @@ async function searchFlights(
       flights: flights,
       cheapest: flights[0],
       message: `Found ${flights.length} flight options`,
+      source: "Amadeus",
     };
   } catch (error) {
     console.error("Amadeus API Error:", error.response?.data || error.message);
+
+    // Try OpenFlights as fallback
+    try {
+      const fallbackFlights = await openFlightsService.generateFlights(
+        originCode,
+        destinationCode,
+        departureDate
+      );
+      if (fallbackFlights && fallbackFlights.length > 0) {
+        return {
+          success: true,
+          flights: fallbackFlights,
+          cheapest: fallbackFlights.reduce((min, f) =>
+            f.price < min.price ? f : min
+          ),
+          message: `Error reaching Amadeus API. Using OpenFlights data.`,
+          source: "OpenFlights (fallback)",
+          error: error.message,
+        };
+      }
+    } catch (fallbackError) {
+      console.error("OpenFlights fallback error:", fallbackError.message);
+    }
+
     const sampleResponse = createSampleFlightResponse(
       originCode,
       destinationCode,

@@ -2,45 +2,49 @@
   {
     "price": 1295.00,
     "currency": "CAD",
-    "duration": "PT16H10M",
-    "durationHours": 16.2,
+    "duration": "PT13H25M",
+    "durationHours": 13.4,
     "businessClassEligible": true,
     "stops": 1,
+    "stopCodes": ["LHR"],
     "carrier": "AC",
-    "departureTime": "2025-11-15T08:00:00",
-    "arrivalTime": "2025-11-15T16:10:00"
+    "departureTime": "2026-04-28T08:00:00",
+    "arrivalTime": "2026-04-28T21:25:00"
   },
   {
     "price": 1420.50,
     "currency": "CAD",
-    "duration": "PT14H25M",
-    "durationHours": 14.4,
+    "duration": "PT14H40M",
+    "durationHours": 14.7,
     "businessClassEligible": true,
-    "stops": 2,
+    "stops": 1,
+    "stopCodes": ["CDG"],
     "carrier": "BA",
-    "departureTime": "2025-11-15T09:30:00",
-    "arrivalTime": "2025-11-15T16:55:00"
+    "departureTime": "2026-04-28T09:30:00",
+    "arrivalTime": "2026-04-29T00:10:00"
   },
   {
     "price": 980.25,
     "currency": "CAD",
-    "duration": "PT20H05M",
-    "durationHours": 20.1,
+    "duration": "PT15H50M",
+    "durationHours": 15.8,
     "businessClassEligible": true,
     "stops": 2,
-    "carrier": "QF",
-    "departureTime": "2025-11-15T07:15:00",
-    "arrivalTime": "2025-11-15T16:20:00"
+    "stopCodes": ["FRA", "VIE"],
+    "carrier": "LH",
+    "departureTime": "2026-04-28T07:15:00",
+    "arrivalTime": "2026-04-28T23:05:00"
   },
   {
     "price": 875.75,
     "currency": "CAD",
-    "duration": "PT18H40M",
-    "durationHours": 18.7,
+    "duration": "PT16H35M",
+    "durationHours": 16.6,
     "businessClassEligible": true,
-    "stops": 3,
+    "stops": 2,
+    "stopCodes": ["ARN", "TLL"],
     "carrier": "SQ",
-    "departureTime": "2025-11-15T06:45:00",
-    "arrivalTime": "2025-11-15T15:25:00"
+    "departureTime": "2026-04-28T06:45:00",
+    "arrivalTime": "2026-04-28T23:20:00"
   }
 ]

@@ -1209,7 +1209,12 @@ function displayFlightResults(flights) {
                 <strong>${
                   flight.stops === 0
                     ? "Direct Flight"
-                    : flight.stops + " stop" + (flight.stops > 1 ? "s" : "")
+                    : flight.stops +
+                      " stop" +
+                      (flight.stops > 1 ? "s" : "") +
+                      (flight.stopCodes && flight.stopCodes.length > 0
+                        ? " (" + flight.stopCodes.join(", ") + ")"
+                        : "")
                 }</strong>
               </span>
               <span style="height: 16px; width: 1px; background: #cbd5e1;"></span>

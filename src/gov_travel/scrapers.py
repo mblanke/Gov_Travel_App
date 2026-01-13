@@ -4,6 +4,7 @@ import json
 import re
 import time
 from dataclasses import dataclass
+from io import StringIO
 from typing import Any, Iterable
 
 import pandas as pd
@@ -46,7 +47,8 @@ def fetch_html(url: str, retry=3) -> str:
 
 
 def extract_tables(html: str) -> list[pd.DataFrame]:
-    return pd.read_html(html)
+    # Wrap literal HTML to avoid pandas FutureWarning
+    return pd.read_html(StringIO(html))
 
 
 def _normalize_header(header: str) -> str:
@@ -146,11 +148,11 @@ def scrape_tables_from_source(source: SourceConfig) -> list[dict[str, Any]]:
     # For sources with alphabet navigation, fetch all letter pages
     if source.uses_alphabet_navigation:
         urls = _get_alphabet_urls(source.url)
-        print(f"  Fetching {len(urls)} alphabet pages...")
+        print(f"    📋 Fetching {len(urls)} alphabet pages...")
     else:
         urls = [source.url]
     
-    for url in urls:
+    for idx, url in enumerate(urls, 1):
         html = fetch_html(url)
         try:
             tables = extract_tables(html)
@@ -175,8 +177,9 @@ def scrape_tables_from_source(source: SourceConfig) -> list[dict[str, Any]]:
             )
         
         table_offset += len(tables)
-        if len(tables) > 0:
-            print(f"    {url.split('let=')[-1] if 'let=' in url else 'base'}: {len(tables)} tables")
+        if len(tables) > 0 and source.uses_alphabet_navigation:
+            letter = url.split('let=')[-1] if 'let=' in url else 'base'
+            print(f"       {letter:>4}: {len(tables)} tables [{idx}/{len(urls)}]")
     
     return results
 
@@ -185,14 +188,27 @@ def extract_rate_entries(
     source: SourceConfig,
     tables: Iterable[dict[str, Any]],
 ) -> list[dict[str, Any]]:
+    """Extract per-diem meal and incidental rates (NOT accommodation listings)"""
     entries: list[dict[str, Any]] = []
+    
+    # Only extract per-diem rates from international and domestic sources
+    if source.name == "accommodations":
+        return entries
+    
+    # Define valid per-diem rate columns
+    valid_rate_types = {
+        "breakfast", "lunch", "dinner", 
+        "incidental amount", "incidentals",
+        "private accommodation", "private accom\xadmodation"
+    }
+    
     for table in tables:
         # Extract currency and country from table title
         table_currency = _extract_currency_from_title(table.get("title"))
         table_country = _extract_country_from_title(table.get("title"))
         
         # Default to CAD for domestic Canadian sources
-        if table_currency is None and source.name in ("domestic", "accommodations"):
+        if table_currency is None and source.name == "domestic":
             table_currency = "CAD"
         
         for row in table["data"]:
@@ -204,16 +220,16 @@ def extract_rate_entries(
             currency = _detect_currency(normalized.get("currency"), fallback=table_currency)
             effective_date = normalized.get("effective date") or normalized.get("effective")
             
-            # Process meal rate columns and other numeric columns
+            # Only extract per-diem meal and incidental columns
             for key, value in normalized.items():
-                if key in {"country", "country/territory", "city", "location", "province", "province/territory", 
-                          "currency", "effective", "effective date", "type of accommodation", "accommodation type",
-                          "meal total", "grand total", "grand total (taxes included)"}:
+                # Only process valid per-diem rate types
+                if key not in valid_rate_types:
                     continue
+                
                 amount = _parse_amount(value)
                 if amount is None:
                     continue
-                # Use table currency (from title) instead of trying to detect from value
+                    
                 entries.append(
                     {
                         "source": source.name,
