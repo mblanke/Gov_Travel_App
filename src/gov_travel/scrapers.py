@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from dataclasses import dataclass
 from typing import Any, Iterable
 
@@ -10,26 +11,38 @@ import requests
 from bs4 import BeautifulSoup
 
 USER_AGENT = "GovTravelScraper/1.0 (+https://example.com)"
+REQUEST_DELAY = 2  # seconds between requests to avoid overwhelming server
 
 
 @dataclass(frozen=True)
 class SourceConfig:
     name: str
     url: str
+    uses_alphabet_navigation: bool = False
 
 
 SOURCES = [
-    SourceConfig(name="international", url="https://www.njc-cnm.gc.ca/directive/app_d.php?lang=en"),
+    SourceConfig(name="international", url="https://www.njc-cnm.gc.ca/directive/app_d.php?lang=en", uses_alphabet_navigation=True),
     SourceConfig(name="domestic", url="https://www.njc-cnm.gc.ca/directive/d10/v325/s978/en"),
     SourceConfig(name="accommodations", url="https://rehelv-acrd.tpsgc-pwgsc.gc.ca/lth-crl-eng.aspx"),
 ]
 
 
-def fetch_html(url: str) -> str:
-    response = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=60)
-    response.raise_for_status()
-    response.encoding = response.apparent_encoding
-    return response.text
+def fetch_html(url: str, retry=3) -> str:
+    for attempt in range(retry):
+        try:
+            response = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=60)
+            response.raise_for_status()
+            response.encoding = response.apparent_encoding
+            time.sleep(REQUEST_DELAY)  # Polite delay between requests
+            return response.text
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            if attempt < retry - 1:
+                wait_time = (attempt + 1) * 5  # Exponential backoff: 5s, 10s, 15s
+                print(f"    Timeout, retrying in {wait_time}s...")
+                time.sleep(wait_time)
+            else:
+                raise
 
 
 def extract_tables(html: str) -> list[pd.DataFrame]:
@@ -100,24 +113,71 @@ def _table_title_map(html: str) -> dict[int, str]:
     return titles
 
 
+def _get_alphabet_urls(base_url: str) -> list[str]:
+    """Generate URLs for all alphabet letters (A-Z) for paginated sources"""
+    import string
+    
+    # First, fetch the base page to get the drv_id (date revision)
+    html = fetch_html(base_url)
+    soup = BeautifulSoup(html, "html.parser")
+    
+    # Find the drv_id from alphabet links
+    drv_id = "86"  # Default to current
+    for link in soup.find_all('a', href=re.compile(r'let=[A-Z]')):
+        href = link.get('href', '')
+        match = re.search(r'drv_id=(\d+)', href)
+        if match:
+            drv_id = match.group(1)
+            break
+    
+    # Generate URLs for each letter
+    urls = []
+    for letter in string.ascii_uppercase:
+        url = f"{base_url}&drv_id={drv_id}&let={letter}"
+        urls.append(url)
+    
+    return urls
+
+
 def scrape_tables_from_source(source: SourceConfig) -> list[dict[str, Any]]:
-    html = fetch_html(source.url)
-    tables = extract_tables(html)
-    title_map = _table_title_map(html)
     results = []
-    for index, table in enumerate(tables):
-        # Flatten MultiIndex columns before converting to JSON
-        if isinstance(table.columns, pd.MultiIndex):
-            table.columns = [col[1] if col[0] != col[1] else col[0] for col in table.columns]
+    table_offset = 0
+    
+    # For sources with alphabet navigation, fetch all letter pages
+    if source.uses_alphabet_navigation:
+        urls = _get_alphabet_urls(source.url)
+        print(f"  Fetching {len(urls)} alphabet pages...")
+    else:
+        urls = [source.url]
+    
+    for url in urls:
+        html = fetch_html(url)
+        try:
+            tables = extract_tables(html)
+        except ValueError:
+            # No tables on this page (e.g., letters with no countries)
+            continue
         
-        data = json.loads(table.to_json(orient="records"))
-        results.append(
-            {
-                "table_index": index,
-                "title": title_map.get(index),
-                "data": data,
-            }
-        )
+        title_map = _table_title_map(html)
+        
+        for index, table in enumerate(tables):
+            # Flatten MultiIndex columns before converting to JSON
+            if isinstance(table.columns, pd.MultiIndex):
+                table.columns = [col[1] if col[0] != col[1] else col[0] for col in table.columns]
+            
+            data = json.loads(table.to_json(orient="records"))
+            results.append(
+                {
+                    "table_index": table_offset + index,
+                    "title": title_map.get(index),
+                    "data": data,
+                }
+            )
+        
+        table_offset += len(tables)
+        if len(tables) > 0:
+            print(f"    {url.split('let=')[-1] if 'let=' in url else 'base'}: {len(tables)} tables")
+    
     return results
 
 
