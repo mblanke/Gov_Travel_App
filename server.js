@@ -80,13 +80,22 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static files from the current directory
-app.use(
-  express.static(__dirname, {
-    maxAge: "1d",
+// Serve React app (production build) or legacy static files
+if (process.env.NODE_ENV === 'production' && require('fs').existsSync(path.join(__dirname, 'dist', 'client'))) {
+  // Serve React production build
+  app.use(express.static(path.join(__dirname, 'dist', 'client'), {
+    maxAge: '1d',
     etag: true,
-  })
-);
+  }));
+} else {
+  // Serve legacy static files from the current directory
+  app.use(
+    express.static(__dirname, {
+      maxAge: "1d",
+      etag: true,
+    })
+  );
+}
 
 // Disable caching for HTML and JS files
 app.use((req, res, next) => {
@@ -203,6 +212,50 @@ app.get(
     logger.warn("⚠️  Falling back to JSON files");
   }
 })();
+
+// ============ DATA PORTAL ENDPOINTS ============
+
+/**
+ * Get all per-diem rates
+ * GET /api/rates/per-diem
+ */
+app.get("/api/rates/per-diem", async (req, res) => {
+  try {
+    const data = await dbService.getAllPerDiemRates();
+    res.json({ success: true, data, count: data.length });
+  } catch (error) {
+    logger.error("Error fetching per-diem rates:", error);
+    res.status(500).json({ error: "Failed to fetch per-diem rates" });
+  }
+});
+
+/**
+ * Get all accommodation rates
+ * GET /api/rates/accommodations
+ */
+app.get("/api/rates/accommodations", async (req, res) => {
+  try {
+    const data = await dbService.getAllAccommodations();
+    res.json({ success: true, data, count: data.length });
+  } catch (error) {
+    logger.error("Error fetching accommodation rates:", error);
+    res.status(500).json({ error: "Failed to fetch accommodation rates" });
+  }
+});
+
+/**
+ * Get portal statistics
+ * GET /api/stats
+ */
+app.get("/api/stats", async (req, res) => {
+  try {
+    const stats = await dbService.getStats();
+    res.json({ success: true, stats });
+  } catch (error) {
+    logger.error("Error fetching stats:", error);
+    res.status(500).json({ error: "Failed to fetch statistics" });
+  }
+});
 
 // ============ DATABASE SEARCH ENDPOINTS ============
 

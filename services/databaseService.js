@@ -266,6 +266,69 @@ class DatabaseService {
         });
     }
 
+    /**
+     * Get all per-diem rates
+     */
+    async getAllPerDiemRates() {
+        const query = `
+            SELECT country, city_name as city, breakfast, lunch, dinner, 
+                   incidentals, currency
+            FROM travel_rates
+            WHERE country IS NOT NULL 
+            AND country != 'Canada'
+            ORDER BY country, city_name
+        `;
+
+        return new Promise((resolve, reject) => {
+            this.db.all(query, [], (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        });
+    }
+
+    /**
+     * Get all accommodation rates
+     */
+    async getAllAccommodations() {
+        const query = `
+            SELECT city_name as city, province, accommodation_rate as rate, currency
+            FROM travel_rates
+            WHERE country = 'Canada'
+            AND accommodation_rate IS NOT NULL
+            ORDER BY province, city_name
+        `;
+
+        return new Promise((resolve, reject) => {
+            this.db.all(query, [], (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        });
+    }
+
+    /**
+     * Get statistics
+     */
+    async getStats() {
+        const queries = {
+            countries: `SELECT COUNT(DISTINCT country) as count FROM travel_rates WHERE country != 'Canada'`,
+            accommodations: `SELECT COUNT(*) as count FROM travel_rates WHERE country = 'Canada' AND accommodation_rate IS NOT NULL`,
+            perDiem: `SELECT COUNT(*) as count FROM travel_rates WHERE country != 'Canada'`,
+        };
+
+        const results = {};
+        for (const [key, query] of Object.entries(queries)) {
+            results[key] = await new Promise((resolve, reject) => {
+                this.db.get(query, [], (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row.count);
+                });
+            });
+        }
+        return results;
+    }
+
     close() {
         if (this.db) {
             this.db.close();
