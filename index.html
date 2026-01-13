@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Government Travel Cost Estimator - NJC Travel Directive</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍁 Government Travel Cost Estimator</h1>
+            <p class="subtitle">Official Canadian Government Travel Costs per NJC Travel Directive</p>
+            <p class="data-source">Data from NJC Appendices C & D (January 2026)</p>
+        </header>
+
+        <main>
+            <form id="travelForm" class="travel-form">
+                <div class="form-section">
+                    <h2>Travel Details</h2>
+                    
+                    <div class="form-group">
+                        <label for="departureCity">Departure City *</label>
+                        <input type="text" id="departureCity" list="cityList" required 
+                               placeholder="Start typing city name...">
+                        <datalist id="cityList"></datalist>
+                        <span class="error-message" id="departureCityError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="destinationCity">Destination City *</label>
+                        <input type="text" id="destinationCity" list="cityList" required
+                               placeholder="Start typing city name...">
+                        <span class="error-message" id="destinationCityError"></span>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="departureDate">Departure Date *</label>
+                            <input type="date" id="departureDate" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="returnDate">Return Date *</label>
+                            <input type="date" id="returnDate" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="currency">Preferred Currency *</label>
+                        <select id="currency" required>
+                            <option value="CAD">CAD - Canadian Dollar</option>
+                            <option value="USD">USD - US Dollar</option>
+                            <option value="EUR">EUR - Euro</option>
+                            <option value="AUD">AUD - Australian Dollar</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2>Accommodation Options</h2>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="privateAccommodation">
+                            Using Private Accommodation (staying with friends/family)
+                        </label>
+                        <p class="help-text">Select this if you're staying at a private residence instead of a hotel</p>
+                    </div>
+
+                    <div id="privateAccommodationDetails" style="display: none;">
+                        <div class="form-group">
+                            <label for="privateAccommodationRate">Daily Private Accommodation Rate</label>
+                            <input type="number" id="privateAccommodationRate" min="0" step="0.01" 
+                                   placeholder="Enter custom rate if applicable">
+                            <p class="help-text">Leave blank to use standard NJC rate</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2>Additional Options</h2>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="searchFlights">
+                            Search Real-Time Flight Availability (Amadeus API)
+                        </label>
+                        <p class="help-text">Note: Requires Amadeus API credentials to be configured</p>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Calculate Travel Costs</button>
+                    <button type="reset" class="btn btn-secondary">Reset Form</button>
+                </div>
+            </form>
+
+            <div id="results" class="results" style="display: none;">
+                <h2>Cost Estimate Summary</h2>
+                
+                <div id="flightInfo" class="result-section" style="display: none;">
+                    <h3>✈️ Flight Information</h3>
+                    <div id="flightDetails"></div>
+                </div>
+
+                <div id="accommodationInfo" class="result-section">
+                    <h3>🏨 Accommodation Costs</h3>
+                    <div id="accommodationDetails"></div>
+                </div>
+
+                <div id="perDiemInfo" class="result-section">
+                    <h3>🍽️ Per Diem (Meals & Incidentals)</h3>
+                    <div id="perDiemDetails"></div>
+                </div>
+
+                <div id="currencyInfo" class="result-section" style="display: none;">
+                    <h3>💱 Currency Conversion</h3>
+                    <div id="currencyDetails"></div>
+                </div>
+
+                <div class="result-section total-section">
+                    <h3>Total Estimated Cost</h3>
+                    <div id="totalCost" class="total-cost"></div>
+                </div>
+
+                <div class="result-actions">
+                    <button onclick="window.print()" class="btn btn-secondary">Print Summary</button>
+                    <button onclick="exportToJSON()" class="btn btn-secondary">Export as JSON</button>
+                </div>
+            </div>
+
+            <div id="error" class="error-box" style="display: none;"></div>
+        </main>
+
+        <footer>
+            <div class="info-section">
+                <h3>About This Tool</h3>
+                <p>This tool calculates official Canadian government travel costs based on the National Joint Council (NJC) Travel Directive. 
+                   It includes comprehensive data for 237+ cities with validated per diem and accommodation rates.</p>
+                
+                <h4>Features:</h4>
+                <ul>
+                    <li>✓ 237+ city database with validation</li>
+                    <li>✓ Real-time flight search (Amadeus API integration)</li>
+                    <li>✓ Multi-currency support (EUR/AUD/CAD/USD with auto-conversion)</li>
+                    <li>✓ City-specific per diem rates from NJC Appendix C</li>
+                    <li>✓ Accommodation rates from NJC Appendix D</li>
+                    <li>✓ Business class eligibility (9+ hour flights)</li>
+                    <li>✓ Private accommodation options</li>
+                </ul>
+
+                <h4>Data Source:</h4>
+                <p>All rates and calculations are based on NJC Travel Directive Appendices C & D, effective January 2026.</p>
+                
+                <h4>API Configuration:</h4>
+                <p>To enable real-time flight search, configure your Amadeus API credentials in <code>config.js</code>.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="cityData.js"></script>
+    <script src="njcRates.js"></script>
+    <script src="currencyConverter.js"></script>
+    <script src="flightSearch.js"></script>
+    <script src="calculator.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
