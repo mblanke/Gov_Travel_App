@@ -20,7 +20,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--db",
         type=Path,
-        default=Path("data/travel_rates.sqlite3"),
+        default=Path("data/travel_rates_scraped.sqlite3"),
         help="Path to the SQLite database",
     )
     parser.add_argument(
