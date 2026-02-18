@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   govt-travel-app:
     build: .
@@ -9,7 +7,9 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
+      - PORT=5001
     env_file:
       - .env
     volumes:
-      - ./data:/app/data:ro
+      - ./:/app
+      - /app/node_modules

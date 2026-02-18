@@ -25,7 +25,7 @@ app.use(
       directives: {
         defaultSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.sheetjs.com"],
         imgSrc: ["'self'", "data:", "https:"],
       },
     },
@@ -67,10 +67,6 @@ app.use("/api/flights/", flightLimiter);
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Body parsing middleware
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-
 // Request logging
 app.use((req, res, next) => {
   logger.info(`${req.method} ${req.url}`, {
@@ -80,11 +76,22 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static files from the current directory
+// Serve static files from the public directory (not project root for security)
 app.use(
-  express.static(__dirname, {
+  express.static(path.join(__dirname, "public"), {
+    maxAge: process.env.NODE_ENV === "production" ? "1d" : 0,
+    etag: true,
+  })
+);
+
+// Serve data JSON files (needed by frontend)
+app.use(
+  "/data",
+  express.static(path.join(__dirname, "data"), {
     maxAge: "1d",
     etag: true,
+    index: false,
+    extensions: ["json"],
   })
 );
 
@@ -111,7 +118,7 @@ app.get("/", (req, res) => {
 
 // Route for validation page
 app.get("/validation", (req, res) => {
-  res.sendFile(path.join(__dirname, "validation.html"));
+  res.sendFile(path.join(__dirname, "public", "validation.html"));
 });
 
 // API endpoint to search flights with caching and validation
@@ -403,11 +410,11 @@ app.get("/api/countries", async (req, res) => {
 
 // Update health check to include database status
 app.get("/api/health", async (req, res) => {
-  let dbStatus = "inactive";
+  let dbStatus = "inactive"; // eslint-disable-line no-useless-assignment
   try {
     const regions = await dbService.getAllRegions();
     dbStatus = regions.length > 0 ? "active" : "empty";
-  } catch (err) {
+  } catch (_err) {
     dbStatus = "error";
   }
 
@@ -438,7 +445,7 @@ if (process.env.NODE_ENV === "development") {
 }
 
 // Global error handler
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   logger.error("Unhandled error:", err);
   res.status(500).json({
     error: "Internal server error",
@@ -456,7 +463,7 @@ app.use((req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   logger.info("==========================================");
   logger.info("Government Travel Cost Estimator v1.2.0");
   logger.info("==========================================");
@@ -502,3 +509,5 @@ process.on("SIGINT", () => {
   logger.info("SIGINT signal received: closing HTTP server");
   process.exit(0);
 });
+
+module.exports = app;

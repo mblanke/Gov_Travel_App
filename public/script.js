@@ -1,6 +1,8 @@
 // ========================================
 // SCRIPT INITIALIZATION - Verify Loading
 // ========================================
+/* global exportToCSV, exportMDXTP, exportMDXTPCSV, XLSX */
+/* eslint-disable no-useless-assignment */
 console.log("🔥 script.js is LOADING...");
 
 // Global variables for database
@@ -68,7 +70,6 @@ function validateRatesAndShowWarnings() {
 
   // Check per diem rates
   if (perDiemRatesDB && perDiemRatesDB.metadata) {
-    const effectiveDate = new Date(perDiemRatesDB.metadata.effectiveDate);
     const lastUpdated = new Date(perDiemRatesDB.metadata.lastUpdated);
     const monthsSinceUpdate =
       (today - lastUpdated) / (1000 * 60 * 60 * 24 * 30);
@@ -110,9 +111,6 @@ function validateRatesAndShowWarnings() {
 
   // Check transportation rates
   if (transportationRatesDB && transportationRatesDB.metadata) {
-    const effectiveDate = new Date(
-      transportationRatesDB.metadata.effectiveDate
-    );
     const lastUpdated = new Date(transportationRatesDB.metadata.lastUpdated);
     const monthsSinceUpdate =
       (today - lastUpdated) / (1000 * 60 * 60 * 24 * 30);
@@ -129,8 +127,8 @@ function validateRatesAndShowWarnings() {
     }
   }
 
-  // Display warnings if any
-  if (warnings.length > 0) {
+  // Display warnings if any (but respect session dismissal)
+  if (warnings.length > 0 && shouldShowWarning()) {
     displayRateWarnings(warnings);
   }
 
@@ -161,8 +159,8 @@ function displayRateWarnings(warnings) {
       warning.type === "outdated"
         ? "alert-danger"
         : warning.type === "warning"
-        ? "alert-warning"
-        : "alert-info";
+          ? "alert-warning"
+          : "alert-info";
     content += `<div class="rate-alert ${alertClass}">`;
     content += `<strong>${warning.database}:</strong> ${warning.message}`;
     content += "</div>";
@@ -173,11 +171,17 @@ function displayRateWarnings(warnings) {
   content +=
     '<a href="https://www.njc-cnm.gc.ca/directive/d10/en" target="_blank">NJC Travel Directive</a></p>';
   content +=
-    '<button onclick="dismissWarningBanner()" class="btn-dismiss">Dismiss</button>';
+    '<button class="btn-dismiss" id="dismissWarningBtn">Dismiss</button>';
   content += "</div>";
 
   warningBanner.innerHTML = content;
   warningBanner.style.display = "block";
+
+  // Attach click listener (CSP-safe)
+  const dismissBtn = document.getElementById("dismissWarningBtn");
+  if (dismissBtn) {
+    dismissBtn.addEventListener("click", dismissWarningBanner);
+  }
 }
 
 // Dismiss warning banner
@@ -210,6 +214,10 @@ const mealsCostEl = document.getElementById("mealsCost");
 const mealsNoteEl = document.getElementById("mealsNote");
 const incidentalsCostEl = document.getElementById("incidentalsCost");
 const incidentalsNoteEl = document.getElementById("incidentalsNote");
+const groundTransportCostEl = document.getElementById("groundTransportCostEl");
+const groundTransportNoteEl = document.getElementById("groundTransportNote");
+const groundTransportLabelEl = document.getElementById("groundTransportLabel");
+const groundTransportBreakdown = document.getElementById("groundTransportBreakdown");
 
 // Event listeners
 form.addEventListener("submit", handleFormSubmit);
@@ -384,6 +392,24 @@ async function handleFormSubmit(e) {
       parseFloat(document.getElementById("estimatedTrainCost").value) || 0;
   }
 
+  // Read ground transport values
+  const groundTransportType = document.getElementById("groundTransportType").value;
+  let groundTransportCost = 0;
+  let groundTransportNote = "";
+  if (groundTransportType !== "none" && (transportMode === "flight" || transportMode === "train")) {
+    const originCost = parseFloat(document.getElementById("originGroundCost").value) || 0;
+    const destCost = parseFloat(document.getElementById("destinationGroundCost").value) || 0;
+    const includeReturn = document.getElementById("groundTransportReturn").checked;
+    const multiplier = includeReturn ? 2 : 1;
+    groundTransportCost = (originCost + destCost) * multiplier;
+    const typeLabel = groundTransportType === "taxi" ? "Taxi/Rideshare" : "Car Rental";
+    const tripLabel = includeReturn ? "round-trip" : "one-way";
+    const parts = [];
+    if (originCost > 0) parts.push(`Home ↔ Airport: $${(originCost * multiplier).toFixed(2)}`);
+    if (destCost > 0) parts.push(`Airport ↔ Hotel: $${(destCost * multiplier).toFixed(2)}`);
+    groundTransportNote = `${typeLabel} (${tripLabel}): ${parts.join(" + ")}`;
+  }
+
   let accommodationPerNight = parseFloat(
     document.getElementById("estimatedAccommodationPerNight").value
   );
@@ -397,74 +423,56 @@ async function handleFormSubmit(e) {
     return;
   }
 
-  // Auto-lookup accommodation rate if not already populated
+  // Auto-lookup accommodation rate from local JSON data
   let destinationRegion = destinationType; // Start with user-selected type
+  const rateData = getAccommodationSuggestion(destinationCity, destinationType);
+
   if (!accommodationPerNight && !privateAccommodation) {
-    try {
-      const response = await fetch(
-        `/api/accommodation/rate?city=${encodeURIComponent(destinationCity)}`
-      );
-      const rateData = await response.json();
+    if (rateData) {
+      // Get rate - use standardRate for international, monthly rate for Canadian cities
+      const currentMonth = new Date(
+        document.getElementById("departureDate").value
+      ).getMonth();
+      accommodationPerNight =
+        rateData.standardRate ||
+        (rateData.monthlyRates && rateData.monthlyRates[currentMonth]) ||
+        100;
+      destinationRegion = normalizeRegion(rateData.region || destinationType);
 
-      if (
-        rateData &&
-        !rateData.error &&
-        (rateData.accommodation || rateData.name)
-      ) {
-        accommodationPerNight =
-          rateData.accommodation?.standard ||
-          rateData.accommodation?.monthly?.[0] ||
-          100;
-        destinationRegion = normalizeRegion(rateData.region || destinationType);
-
-        // Use city-specific allowances when provided by DB
-        if (rateData.meals) {
-          customAllowances = {
-            breakfast: rateData.meals.breakfast,
-            lunch: rateData.meals.lunch,
-            dinner: rateData.meals.dinner,
-            incidental: rateData.incidentals,
-            currency: rateData.currency,
-            privateAccommodation: 50.0,
-          };
-        }
-        document.getElementById("estimatedAccommodationPerNight").value =
-          accommodationPerNight.toFixed(2);
-      } else {
-        alert(
-          `Unable to find accommodation rate for "${destinationCity}". Please enter rate manually or check the city spelling.`
-        );
-        return;
+      // Use city-specific allowances
+      if (rateData.meals) {
+        customAllowances = {
+          breakfast: rateData.meals.breakfast,
+          lunch: rateData.meals.lunch,
+          dinner: rateData.meals.dinner,
+          incidental: rateData.incidentals,
+          currency: rateData.currency,
+          accommodationCurrency: rateData.currency || (rateData.country === "Canada" ? "CAD" : "USD"),
+          privateAccommodation: 50.0,
+        };
       }
-    } catch (error) {
-      console.error("Error fetching accommodation rate:", error);
-      alert("Error connecting to server. Please try again.");
+      document.getElementById("estimatedAccommodationPerNight").value =
+        accommodationPerNight.toFixed(2);
+    } else {
+      alert(
+        `Unable to find accommodation rate for "${destinationCity}". Please enter rate manually or check the city spelling.`
+      );
       return;
     }
-  } else if (accommodationPerNight) {
-    // If accommodation is already populated, still try to detect the region for per diem rates
-    try {
-      const response = await fetch(
-        `/api/accommodation/rate?city=${encodeURIComponent(destinationCity)}`
-      );
-      const rateData = await response.json();
-      if (rateData && rateData.region) {
-        destinationRegion = normalizeRegion(rateData.region);
+  } else if (accommodationPerNight && rateData) {
+    // If accommodation is already populated, still detect the region for per diem rates
+    destinationRegion = normalizeRegion(rateData.region || destinationType);
 
-        if (rateData.meals) {
-          customAllowances = {
-            breakfast: rateData.meals.breakfast,
-            lunch: rateData.meals.lunch,
-            dinner: rateData.meals.dinner,
-            incidental: rateData.incidentals,
-            currency: rateData.currency,
-            privateAccommodation: 50.0,
-          };
-        }
-      }
-    } catch (error) {
-      console.warn("Could not fetch region data:", error);
-      // Continue with user-selected type
+    if (rateData.meals) {
+      customAllowances = {
+        breakfast: rateData.meals.breakfast,
+        lunch: rateData.meals.lunch,
+        dinner: rateData.meals.dinner,
+        incidental: rateData.incidentals,
+        currency: rateData.currency,
+        accommodationCurrency: rateData.currency || (rateData.country === "Canada" ? "CAD" : "USD"),
+        privateAccommodation: 50.0,
+      };
     }
   }
 
@@ -485,12 +493,15 @@ async function handleFormSubmit(e) {
       numberOfDays,
       numberOfNights,
       privateAccommodation,
+      groundTransportCost,
+      groundTransportNote,
+      groundTransportType,
     },
     customAllowances // PASS the city-specific allowances here!
   );
 
   // Display results
-  displayResults(costs, {
+  const travelInfo = {
     departureCity,
     destinationCity,
     numberOfDays,
@@ -499,7 +510,12 @@ async function handleFormSubmit(e) {
     flightDuration,
     distanceKm,
     privateAccommodation,
-  });
+    groundTransportType,
+  };
+  displayResults(costs, travelInfo);
+
+  // Store data for CSV export and trip history
+  storeEstimateData({ ...costs, ...travelInfo });
 }
 
 function calculateCosts(params, customAllowances = null) {
@@ -513,6 +529,9 @@ function calculateCosts(params, customAllowances = null) {
     numberOfDays,
     numberOfNights,
     privateAccommodation,
+    groundTransportCost = 0,
+    groundTransportNote = "",
+    groundTransportType = "none",
   } = params;
 
   // Use city-specific allowances if provided; otherwise fall back to region defaults
@@ -522,16 +541,19 @@ function calculateCosts(params, customAllowances = null) {
   // Calculate transportation cost
   let transportCost = 0;
   let transportNote = "";
-  let transportLabel = "🚗 Transportation";
+  let transportLabel = "Transportation";
 
   if (transportMode === "flight") {
-    transportLabel = "✈️ Flight Cost";
+    transportLabel = "Flight Cost";
     if (flightDuration >= BUSINESS_CLASS_THRESHOLD_HOURS) {
       transportCost = estimatedTransportCost * BUSINESS_CLASS_MULTIPLIER;
       transportNote = `Business class applicable (flight ${flightDuration} hours ≥ 9 hours). Estimated at ${BUSINESS_CLASS_MULTIPLIER}x economy cost per NJC Directive Section 3.3.11/3.4.11`;
+    } else {
+      transportCost = estimatedTransportCost;
+      transportNote = `Economy class flight (${flightDuration} hours < 9 hours). Per NJC Directive Section 3.3.11/3.4.11`;
     }
   } else if (transportMode === "vehicle") {
-    transportLabel = "🚗 Personal Vehicle";
+    transportLabel = "Personal Vehicle";
     const kmRate = transportationRatesDB
       ? transportationRatesDB.kilometricRates.modules.module3.rates.tier1.perKm
       : 0.68;
@@ -540,7 +562,7 @@ function calculateCosts(params, customAllowances = null) {
       2
     )}/km × ${distanceKm} km. Rate from NJC Appendix B. Parking and tolls may be additional.`;
   } else if (transportMode === "train") {
-    transportLabel = "🚂 Train Cost";
+    transportLabel = "Train Cost";
     transportCost = estimatedTransportCost;
     transportNote =
       "Economy class estimate. Business class may be authorized with approval for extended travel or work requirements.";
@@ -581,22 +603,32 @@ function calculateCosts(params, customAllowances = null) {
     2
   )}/day × ${numberOfDays} days`;
 
-  // Calculate total
-  const totalCost =
-    transportCost + accommodationCost + mealsCost + incidentalsCost;
+  // Calculate total in CAD
+  // We need to convert each component to CAD based on its specific currency
+  const transportCAD = transportCost; // Assumed CAD
+  const accommodationCAD = convertCurrency(accommodationCost, allowances.accommodationCurrency || "USD", "CAD");
+  const mealsCAD = convertCurrency(mealsCost, allowances.currency || "CAD", "CAD");
+  const incidentalsCAD = convertCurrency(incidentalsCost, allowances.currency || "CAD", "CAD");
+  const groundTransportCAD = groundTransportCost; // Already in CAD
+
+  const totalCost = transportCAD + accommodationCAD + mealsCAD + incidentalsCAD + groundTransportCAD;
 
   return {
     transportCost,
     transportNote,
     transportLabel,
+    groundTransportCost,
+    groundTransportNote,
+    groundTransportType,
     accommodationCost,
     accommodationNote,
     mealsCost,
     mealsNote,
     incidentalsCost,
     incidentalsNote,
-    totalCost,
+    totalCost, // Now strictly in CAD
     currency: allowances.currency || "CAD",
+    accommodationCurrency: allowances.accommodationCurrency || "USD",
   };
 }
 
@@ -629,32 +661,57 @@ function formatCurrencyAmount(amount, currency, showSecondary = false) {
 function displayResults(costs, travelInfo) {
   // Update cost values with optional CAD conversion
   const currencyLabel = costs.currency || "CAD";
+  const accomCurrencyLabel = costs.accommodationCurrency || "USD";
+
   const showCADConversion = currencyLabel !== "CAD";
+  const showAccomCADConversion = accomCurrencyLabel !== "CAD";
 
   totalCostEl.textContent = formatCurrencyAmount(
     costs.totalCost,
-    currencyLabel,
-    showCADConversion
+    "CAD",
+    false
   );
+
+
+
   transportLabelEl.textContent = costs.transportLabel;
   transportCostEl.textContent = formatCurrencyAmount(
     costs.transportCost,
-    currencyLabel,
-    showCADConversion
+    "CAD", // Flights are usually booked in home currency or converted early
+    false
   );
+
   transportNoteEl.textContent = costs.transportNote;
+
+  // Ground transport breakdown
+  if (costs.groundTransportCost > 0) {
+    groundTransportBreakdown.style.display = "block";
+    const typeLabel = costs.groundTransportType === "taxi" ? "Taxi/Rideshare" : "Car Rental";
+    groundTransportLabelEl.textContent = `Ground Transport (${typeLabel})`;
+    groundTransportCostEl.textContent = formatCurrencyAmount(
+      costs.groundTransportCost,
+      "CAD",
+      false
+    );
+    groundTransportNoteEl.textContent = costs.groundTransportNote;
+  } else {
+    groundTransportBreakdown.style.display = "none";
+  }
+
   accommodationCostEl.textContent = formatCurrencyAmount(
     costs.accommodationCost,
-    currencyLabel,
-    showCADConversion
+    accomCurrencyLabel,
+    showAccomCADConversion
   );
   accommodationNoteEl.textContent = costs.accommodationNote;
+
   mealsCostEl.textContent = formatCurrencyAmount(
     costs.mealsCost,
     currencyLabel,
     showCADConversion
   );
   mealsNoteEl.textContent = costs.mealsNote;
+
   incidentalsCostEl.textContent = formatCurrencyAmount(
     costs.incidentalsCost,
     currencyLabel,
@@ -677,7 +734,7 @@ function handleFormReset() {
 }
 
 // Validate city exists in database
-async function validateCity(inputId) {
+function validateCity(inputId) {
   const input = document.getElementById(inputId);
   const statusId =
     inputId === "departureCity"
@@ -686,51 +743,53 @@ async function validateCity(inputId) {
   const status = document.getElementById(statusId);
   const city = input.value.trim();
 
-  console.log(`validateCity called for ${inputId}, city: "${city}"`);
-
   if (!city) {
     status.style.display = "none";
     input.style.borderColor = "";
     return;
   }
 
-  try {
-    const url = `/api/accommodation/rate?city=${encodeURIComponent(city)}`;
-    console.log(`Fetching: ${url}`);
-    const response = await fetch(url);
-    const data = await response.json();
-    console.log(`API response:`, data);
+  // Validate against local ALL_CITIES (loaded from JSON)
+  // Normalize: lowercase, collapse whitespace, remove extra spaces around commas
+  const normalize = (s) => s.toLowerCase().replace(/\s*,\s*/g, ", ").replace(/\s+/g, " ").trim();
+  const normalCity = normalize(city);
 
-    if (data && !data.error && data.name) {
-      // Valid city
-      console.log(`✅ Valid city: ${data.name}`);
-      status.textContent = `✅ ${data.name} found`;
-      status.style.color = "#2e7d32";
-      status.style.display = "block";
-      input.style.borderColor = "#2e7d32";
-      input.dataset.valid = "true";
-    } else {
-      // Invalid city
-      console.log(`❌ Invalid city`);
-      status.textContent = `❌ City not found. Check spelling or try a nearby major city`;
-      status.style.color = "#c62828";
-      status.style.display = "block";
-      input.style.borderColor = "#c62828";
-      input.dataset.valid = "false";
+  // Exact match on full name (e.g., "Ottawa, ON")
+  let match = ALL_CITIES.find((c) => normalize(c) === normalCity);
+
+  // Partial match: user typed just the city name (e.g., "Ottawa")
+  if (!match) {
+    match = ALL_CITIES.find((c) => normalize(c).startsWith(normalCity + ","));
+  }
+
+  // Loose match: city name contains the input
+  if (!match) {
+    match = ALL_CITIES.find((c) => normalize(c).includes(normalCity));
+  }
+
+  if (match) {
+    // Auto-fill the full city name if user typed a partial match
+    if (normalize(match) !== normalCity) {
+      input.value = match;
     }
-  } catch (error) {
-    console.error("Validation error:", error);
-    status.style.display = "none";
+    status.textContent = `✅ ${match} found`;
+    status.style.color = "#2e7d32";
+    status.style.display = "block";
+    input.style.borderColor = "#2e7d32";
+    input.dataset.valid = "true";
+  } else {
+    status.textContent = `❌ City not found. Check spelling or try a nearby major city`;
+    status.style.color = "#c62828";
+    status.style.display = "block";
+    input.style.borderColor = "#c62828";
+    input.dataset.valid = "false";
   }
 }
 
 // Simplified city suggestions function - called directly from HTML oninput
-async function showCitySuggestions(query, suggestionsId, inputId) {
-  console.log(`showCitySuggestions: query="${query}", div="${suggestionsId}"`);
-
+function showCitySuggestions(query, suggestionsId, inputId) {
   const suggestionsDiv = document.getElementById(suggestionsId);
   if (!suggestionsDiv) {
-    console.error(`Suggestions div not found: ${suggestionsId}`);
     return;
   }
 
@@ -740,56 +799,39 @@ async function showCitySuggestions(query, suggestionsId, inputId) {
     return;
   }
 
-  // Show loading
-  suggestionsDiv.innerHTML =
-    '<div class="city-suggestion-item">Loading...</div>';
-  suggestionsDiv.style.display = "block";
+  // Filter from local ALL_CITIES array
+  const lowerQuery = query.toLowerCase();
+  const matches = ALL_CITIES.filter((city) =>
+    city.toLowerCase().includes(lowerQuery)
+  ).slice(0, MAX_CITY_SUGGESTIONS);
 
-  try {
-    const response = await fetch(
-      `/api/autocomplete?q=${encodeURIComponent(query)}`
-    );
-    const data = await response.json();
-    console.log("API response:", data);
-
-    if (!data.suggestions || data.suggestions.length === 0) {
-      suggestionsDiv.innerHTML =
-        '<div class="city-suggestion-item">No cities found</div>';
-      return;
-    }
-
-    // Format city names
-    const cities = data.suggestions.map((city) => {
-      if (city.country === "Canada") {
-        return `${city.city_name}, ${city.province_state}`;
-      } else {
-        return `${city.city_name}, ${city.country}`;
-      }
-    });
-
-    // Build HTML for suggestions
-    suggestionsDiv.innerHTML = cities
-      .slice(0, 10)
-      .map(
-        (city) =>
-          `<div class="city-suggestion-item" onclick="selectCity('${city.replace(
-            /'/g,
-            "\\'"
-          )}', '${inputId}')">${city}</div>`
-      )
-      .join("");
-
-    suggestionsDiv.style.display = "block";
-  } catch (error) {
-    console.error("Error:", error);
+  if (matches.length === 0) {
     suggestionsDiv.innerHTML =
-      '<div class="city-suggestion-item">Error loading cities</div>';
+      '<div class="city-suggestion-item">No cities found</div>';
+    suggestionsDiv.style.display = "block";
+    return;
   }
+
+  // Build HTML for suggestions using data attributes (no inline onclick due to CSP)
+  suggestionsDiv.innerHTML = matches
+    .map(
+      (city) =>
+        `<div class="city-suggestion-item" data-city="${city.replace(/"/g, '&quot;')}" data-input="${inputId}">${city}</div>`
+    )
+    .join("");
+
+  // Attach click handlers via event delegation
+  suggestionsDiv.querySelectorAll(".city-suggestion-item[data-city]").forEach((item) => {
+    item.addEventListener("click", function () {
+      selectCity(this.dataset.city, this.dataset.input);
+    });
+  });
+
+  suggestionsDiv.style.display = "block";
 }
 
 // Select a city and populate the input
 function selectCity(cityName, inputId) {
-  console.log(`Selecting city: ${cityName} for input: ${inputId}`);
   document.getElementById(inputId).value = cityName;
 
   // Hide suggestions
@@ -799,7 +841,10 @@ function selectCity(cityName, inputId) {
       : "destinationCitySuggestions";
   document.getElementById(suggestionsId).style.display = "none";
 
-  // Trigger change event for destination city
+  // Run validation to show green checkmark
+  validateCity(inputId);
+
+  // Trigger accommodation lookup for destination city
   if (inputId === "destinationCity") {
     handleDestinationInput();
   }
@@ -824,28 +869,39 @@ document.addEventListener("click", function (event) {
   }
 });
 
-// Load cities from database API
-async function loadCitiesFromAPI() {
+// Build ALL_CITIES from the already-loaded JSON data
+function loadCitiesFromJSON() {
   try {
-    const response = await fetch("/api/search?q=");
-    const data = await response.json();
-
-    if (data && data.results) {
-      // Extract city names from results
-      ALL_CITIES = data.results
-        .map((city) => {
-          if (city.country === "Canada") {
-            return `${city.city_name}, ${city.province_state}`;
-          } else {
-            return `${city.city_name}, ${city.country}`;
-          }
-        })
-        .sort((a, b) => a.localeCompare(b));
-
-      console.log(`Loaded ${ALL_CITIES.length} cities from database`);
+    if (!accommodationRatesDB) {
+      console.warn("accommodationRatesDB not loaded yet");
+      ALL_CITIES = [];
+      return;
     }
+
+    const citySet = new Set();
+
+    // Canadian cities from accommodationRatesDB.cities
+    if (accommodationRatesDB.cities) {
+      Object.values(accommodationRatesDB.cities).forEach((city) => {
+        if (city && city.name) {
+          citySet.add(city.name);
+        }
+      });
+    }
+
+    // International cities from accommodationRatesDB.internationalCities
+    if (accommodationRatesDB.internationalCities) {
+      Object.values(accommodationRatesDB.internationalCities).forEach((city) => {
+        if (city && city.name) {
+          citySet.add(city.name);
+        }
+      });
+    }
+
+    ALL_CITIES = Array.from(citySet).sort((a, b) => a.localeCompare(b));
+    console.log(`Loaded ${ALL_CITIES.length} cities from JSON data`);
   } catch (error) {
-    console.error("Error loading cities from API:", error);
+    console.error("Error loading cities from JSON:", error);
     ALL_CITIES = [];
   }
 }
@@ -879,6 +935,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     .getElementById("transportMode")
     .addEventListener("change", handleTransportModeChange);
 
+  // Handle ground transport type change
+  document
+    .getElementById("groundTransportType")
+    .addEventListener("change", handleGroundTransportTypeChange);
+
   // Handle automatic flight search
   document
     .getElementById("searchFlightsBtn")
@@ -898,7 +959,38 @@ document.addEventListener("DOMContentLoaded", async () => {
     .getElementById("returnDate")
     .addEventListener("change", updateGoogleFlightsLink);
 
+  // Load city data for autocomplete from already-loaded JSON
+  loadCitiesFromJSON();
+
+  // Attach city suggestion listeners (cannot use inline oninput due to CSP)
+  document
+    .getElementById("departureCity")
+    .addEventListener("input", function () {
+      showCitySuggestions(this.value, "departureCitySuggestions", "departureCity");
+    });
+  document
+    .getElementById("destinationCity")
+    .addEventListener("input", function () {
+      showCitySuggestions(this.value, "destinationCitySuggestions", "destinationCity");
+    });
+
   // City validation listeners moved outside DOMContentLoaded to avoid timing issues
+
+  // Button listeners (removed inline onclick from HTML for CSP compliance)
+  const exportMdxtpBtn = document.getElementById("exportMdxtpBtn");
+  if (exportMdxtpBtn) exportMdxtpBtn.addEventListener("click", () => exportMDXTP());
+
+  const exportBtn = document.getElementById("exportCsvBtn");
+  if (exportBtn) exportBtn.addEventListener("click", () => exportMDXTPCSV());
+
+  const printBtn = document.getElementById("printBtn");
+  if (printBtn) printBtn.addEventListener("click", () => printEstimate());
+
+  const voiceCancelBtn = document.getElementById("voiceCancelBtn");
+  if (voiceCancelBtn) voiceCancelBtn.addEventListener("click", () => stopVoiceAgent());
+
+  const voiceAgentBtn = document.getElementById("voiceAgentBtn");
+  if (voiceAgentBtn) voiceAgentBtn.addEventListener("click", () => toggleVoiceAgent());
 });
 
 // Format currency helper
@@ -910,13 +1002,13 @@ function formatCurrency(amount) {
 }
 
 // Handle destination city input for suggestions
-async function handleDestinationInput(e) {
+function handleDestinationInput() {
   const destinationCity = document.getElementById("destinationCity").value;
   const destinationType = document.getElementById("destinationType").value;
 
   if (!destinationCity || !destinationType) {
     document.getElementById("accommodationSuggestion").textContent =
-      "✓ Rate will be looked up automatically based on destination city";
+      "\u2713 Rate will be looked up automatically based on destination city";
     document.getElementById("accommodationSuggestion").style.color = "#666";
     document.getElementById("estimatedAccommodationPerNight").value = "";
     return;
@@ -927,30 +1019,20 @@ async function handleDestinationInput(e) {
   );
   const suggestionText = document.getElementById("accommodationSuggestion");
 
-  // Fetch from API
-  try {
-    const response = await fetch(
-      `/api/accommodation/rate?city=${encodeURIComponent(destinationCity)}`
-    );
-    const rateData = await response.json();
+  // Look up from local JSON data
+  const rateData = getAccommodationSuggestion(destinationCity, destinationType);
 
-    if (rateData && !rateData.error && rateData.accommodation_rate) {
-      accommodationInput.value = rateData.accommodation_rate.toFixed(2);
-      suggestionText.textContent = `✓ Found rate for ${
-        rateData.city_name
-      }: $${rateData.accommodation_rate.toFixed(2)}/night`;
-      suggestionText.style.color = "#2e7d32";
-    } else {
-      accommodationInput.value = "";
-      suggestionText.textContent =
-        "⚠️ No rate found for this city. Rate will be looked up on submit.";
-      suggestionText.style.color = "#ff9800";
-    }
-  } catch (error) {
-    console.error("Error fetching accommodation rate:", error);
+  if (rateData) {
+    // Get rate - use standardRate for international, first monthly rate for Canadian cities
+    const rate = rateData.standardRate || (rateData.monthlyRates && rateData.monthlyRates[new Date().getMonth()]) || 100;
+    accommodationInput.value = rate.toFixed(2);
+    const currencySymbol = rateData.currency === "CAD" ? "$" : rateData.currency + " ";
+    suggestionText.textContent = `\u2713 Found rate for ${rateData.name}: ${currencySymbol}${rate.toFixed(2)}/night`;
+    suggestionText.style.color = "#2e7d32";
+  } else {
     accommodationInput.value = "";
     suggestionText.textContent =
-      "⚠️ Error fetching rate. Rate will be looked up on submit.";
+      "\u26A0\uFE0F No rate found. Please enter rate manually or check the city spelling.";
     suggestionText.style.color = "#ff9800";
   }
 }
@@ -964,6 +1046,17 @@ function handleTransportModeChange(e) {
   document.getElementById("vehicleOptionsGroup").style.display = "none";
   document.getElementById("flightCostGroup").style.display = "none";
   document.getElementById("trainCostGroup").style.display = "none";
+
+  // Show/hide ground transport (relevant for flight & train, not personal vehicle)
+  const groundGroup = document.getElementById("groundTransportGroup");
+  if (transportMode === "flight" || transportMode === "train") {
+    groundGroup.style.display = "block";
+  } else {
+    groundGroup.style.display = "none";
+    // Reset ground transport when hidden
+    document.getElementById("groundTransportType").value = "none";
+    document.getElementById("groundTransportFields").style.display = "none";
+  }
 
   // Clear required attributes
   document.getElementById("flightDuration").removeAttribute("required");
@@ -984,6 +1077,17 @@ function handleTransportModeChange(e) {
     document.getElementById("distanceKm").setAttribute("required", "required");
   } else if (transportMode === "train") {
     document.getElementById("trainCostGroup").style.display = "block";
+  }
+}
+
+// Handle ground transport type change (show/hide cost fields)
+function handleGroundTransportTypeChange(e) {
+  const groundType = e.target.value;
+  const fieldsDiv = document.getElementById("groundTransportFields");
+  if (groundType === "none") {
+    fieldsDiv.style.display = "none";
+  } else {
+    fieldsDiv.style.display = "block";
   }
 }
 
@@ -1144,6 +1248,19 @@ function showFlightStatus(type, message) {
 function displayFlightResults(flights) {
   const resultsDiv = document.getElementById("flightResults");
 
+  // Inject hover styles (once)
+  if (!document.getElementById("flight-hover-styles")) {
+    const style = document.createElement("style");
+    style.id = "flight-hover-styles";
+    style.textContent = `
+      .flight-card { transition: all 0.3s ease; }
+      .flight-card:hover { background: #f8fafc !important; transform: translateX(4px); box-shadow: 0 8px 16px rgba(0,0,0,0.08); }
+      .flight-card-cheapest:hover { background: linear-gradient(135deg, #e0f2fe, #cffafe) !important; }
+      .select-flight-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(14, 165, 233, 0.4) !important; }
+    `;
+    document.head.appendChild(style);
+  }
+
   let html = `
     <div style="background: linear-gradient(135deg, #0f172a, #1e293b); padding: 20px 24px; border-radius: 12px 12px 0 0; border-bottom: 3px solid #0ea5e9;">
       <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -1169,24 +1286,16 @@ function displayFlightResults(flights) {
       : "";
 
     html += `
-      <div style="padding: 20px 24px; border-bottom: 1px solid #e2e8f0; background: ${
-        isCheapest ? "linear-gradient(135deg, #f0f9ff, #e0f2fe)" : "white"
+      <div style="padding: 20px 24px; border-bottom: 1px solid #e2e8f0; background: ${isCheapest ? "linear-gradient(135deg, #f0f9ff, #e0f2fe)" : "white"
       }; transition: all 0.3s ease;" 
            id="flight-${index}"
-           onmouseover="this.style.background='${
-             isCheapest
-               ? "linear-gradient(135deg, #e0f2fe, #cffafe)"
-               : "#f8fafc"
-           }'; this.style.transform='translateX(4px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.08)'"
-           onmouseout="this.style.background='${
-             isCheapest ? "linear-gradient(135deg, #f0f9ff, #e0f2fe)" : "white"
-           }'; this.style.transform='translateX(0)'; this.style.boxShadow='none'">
+           class="flight-card ${isCheapest ? 'flight-card-cheapest' : ''}">
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 20px;">
           <div style="flex: 1;">
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
               <strong style="font-size: 1.5rem; color: #0ea5e9; font-weight: 700;">$${flight.price.toFixed(
-                2
-              )}</strong>
+        2
+      )}</strong>
               <span style="color: #475569; font-size: 0.875rem; font-weight: 500;">CAD</span>
               ${cheapestBadge}
               ${badge}
@@ -1201,31 +1310,45 @@ function displayFlightResults(flights) {
               </span>
               <span style="height: 16px; width: 1px; background: #cbd5e1;"></span>
               <span style="display: flex; align-items: center; gap: 6px;">
-                ${
-                  flight.stops === 0
-                    ? '<svg width="16" height="16" fill="#10b981" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>'
-                    : '<svg width="16" height="16" fill="#f59e0b" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
-                }
-                <strong>${
-                  flight.stops === 0
-                    ? "Direct Flight"
-                    : flight.stops + " stop" + (flight.stops > 1 ? "s" : "")
-                }</strong>
+                ${flight.stops === 0
+        ? '<svg width="16" height="16" fill="#10b981" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>'
+        : '<svg width="16" height="16" fill="#f59e0b" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
+      }
+                <strong>${flight.stops === 0
+        ? "Direct Flight"
+        : flight.stops + " stop" + (flight.stops > 1 ? "s" : "")
+      }</strong>
               </span>
               <span style="height: 16px; width: 1px; background: #cbd5e1;"></span>
-              <span style="color: #64748b; font-size: 0.8125rem;">${
-                flight.carrier || "Various"
-              }</span>
+              <span style="color: #64748b; font-size: 0.8125rem;">${flight.carrier || "Various"
+      }</span>
             </div>
+            ${flight.layovers && flight.layovers.length > 0 ? `
+            <div style="margin-top: 10px; padding: 10px 14px; background: #f8fafc; border-left: 3px solid #f59e0b; border-radius: 0 6px 6px 0;">
+              <div style="font-size: 0.8125rem; color: #64748b; margin-bottom: 6px; font-weight: 600;">🛬 Layover Details</div>
+              ${flight.layovers.map((lo, li) => {
+                const hrs = Math.floor(lo.layoverMinutes / 60);
+                const mins = lo.layoverMinutes % 60;
+                const timeStr = hrs > 0 ? hrs + 'h ' + (mins > 0 ? mins + 'm' : '') : mins + 'm';
+                const longLayover = lo.layoverMinutes >= 240;
+                return `<div style="display: flex; align-items: center; gap: 8px; font-size: 0.8125rem; color: #334155; ${li > 0 ? 'margin-top: 4px;' : ''}">
+                  <span style="color: #f59e0b;">●</span>
+                  <strong>${lo.city}</strong> (${lo.airport})
+                  <span style="color: #94a3b8;">—</span>
+                  <span style="${longLayover ? 'color: #dc2626; font-weight: 600;' : 'color: #475569;'}">${timeStr.trim()}${longLayover ? ' ⚠️' : ''}</span>
+                </div>`;
+              }).join('')}
+            </div>` : ''}
           </div>
           <button type="button" 
                   class="select-flight-btn"
                   data-price="${flight.price}" 
                   data-duration="${flight.durationHours}" 
                   data-business="${isBusinessClass}"
-                  style="padding: 12px 24px; background: linear-gradient(135deg, #0ea5e9, #06b6d4); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9375rem; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3); transition: all 0.3s ease; white-space: nowrap;"
-                  onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(14, 165, 233, 0.4)'"
-                  onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(14, 165, 233, 0.3)'">
+                  data-stops="${flight.stops}"
+                  data-carrier="${flight.carrier || 'Various'}"
+                  data-layovers="${flight.layovers ? encodeURIComponent(JSON.stringify(flight.layovers)) : ''}"
+                  style="padding: 12px 24px; background: linear-gradient(135deg, #0ea5e9, #06b6d4); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9375rem; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3); transition: all 0.3s ease; white-space: nowrap;">>
             Select Flight →
           </button>
         </div>
@@ -1254,18 +1377,29 @@ function displayFlightResults(flights) {
         const price = parseFloat(this.dataset.price);
         const duration = parseFloat(this.dataset.duration);
         const business = this.dataset.business === "true";
-        selectFlight(price, duration, business);
+        const stops = parseInt(this.dataset.stops) || 0;
+        const carrier = this.dataset.carrier || "Various";
+        let layovers = [];
+        try {
+          if (this.dataset.layovers) {
+            layovers = JSON.parse(decodeURIComponent(this.dataset.layovers));
+          }
+        } catch (e) { layovers = []; }
+        selectFlight(price, duration, business, stops, carrier, layovers);
       });
     });
   }, 0);
 }
 
 // Select a flight and populate form
-function selectFlight(price, durationHours, businessClassEligible) {
+function selectFlight(price, durationHours, businessClassEligible, stops, carrier, layovers) {
   console.log("selectFlight called with:", {
     price,
     durationHours,
     businessClassEligible,
+    stops,
+    carrier,
+    layovers,
   });
   // Set hidden form fields
   document.getElementById("flightDuration").value = durationHours;
@@ -1277,9 +1411,30 @@ function selectFlight(price, durationHours, businessClassEligible) {
 
   let details = `<strong>Price:</strong> $${price.toFixed(
     2
-  )} CAD | <strong>Duration:</strong> ${durationHours} hours`;
+  )} CAD | <strong>Duration:</strong> ${durationHours} hours | <strong>Carrier:</strong> ${carrier || "Various"}`;
   if (businessClassEligible) {
     details += ` | <strong style="color: #ff9800;">⚠️ Business class eligible (≥9 hours)</strong>`;
+  }
+
+  // Add stop/layover summary
+  if (stops === 0) {
+    details += ` | <strong style="color: #10b981;">✈️ Direct Flight</strong>`;
+  } else {
+    details += ` | <strong>${stops} stop${stops > 1 ? "s" : ""}</strong>`;
+  }
+
+  // Add layover details
+  if (layovers && layovers.length > 0) {
+    details += `<div style="margin-top: 8px; padding: 8px 12px; background: #fffbeb; border-left: 3px solid #f59e0b; border-radius: 0 6px 6px 0; font-size: 0.875rem;">`;
+    details += `<strong style="color: #92400e;">🛬 Layovers:</strong> `;
+    const layoverParts = layovers.map(lo => {
+      const hrs = Math.floor(lo.layoverMinutes / 60);
+      const mins = lo.layoverMinutes % 60;
+      const timeStr = hrs > 0 ? hrs + 'h ' + (mins > 0 ? mins + 'm' : '') : mins + 'm';
+      return `${lo.city} (${lo.airport}) — ${timeStr.trim()}`;
+    });
+    details += layoverParts.join(' → ');
+    details += `</div>`;
   }
 
   selectedDetailsP.innerHTML = details;

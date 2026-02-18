@@ -17,7 +17,7 @@
     "durationHours": 14.4,
     "businessClassEligible": true,
     "stops": 2,
-    "carrier": "BA",
+    "carrier": "LH",
     "departureTime": "2025-11-15T09:30:00",
     "arrivalTime": "2025-11-15T16:55:00"
   },
@@ -28,7 +28,7 @@
     "durationHours": 20.1,
     "businessClassEligible": true,
     "stops": 2,
-    "carrier": "QF",
+    "carrier": "AF",
     "departureTime": "2025-11-15T07:15:00",
     "arrivalTime": "2025-11-15T16:20:00"
   },
@@ -39,7 +39,7 @@
     "durationHours": 18.7,
     "businessClassEligible": true,
     "stops": 3,
-    "carrier": "SQ",
+    "carrier": "BA",
     "departureTime": "2025-11-15T06:45:00",
     "arrivalTime": "2025-11-15T15:25:00"
   }

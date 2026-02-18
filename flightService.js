@@ -89,6 +89,25 @@ async function searchFlights(
       // Determine if business class eligible (9+ hours)
       const businessClassEligible = durationHours >= 9;
 
+      // Extract layover details from segments
+      const layovers = [];
+      for (let i = 0; i < segments.length - 1; i++) {
+        const arrivalTime = new Date(segments[i].arrival.at);
+        const nextDepartureTime = new Date(segments[i + 1].departure.at);
+        const layoverMs = nextDepartureTime - arrivalTime;
+        const layoverMinutes = Math.round(layoverMs / 60000);
+        const layoverHours = Math.floor(layoverMinutes / 60);
+        const layoverMins = layoverMinutes % 60;
+        const durationISO = `PT${layoverHours > 0 ? layoverHours + "H" : ""}${layoverMins > 0 ? layoverMins + "M" : ""}`;
+
+        layovers.push({
+          airport: segments[i].arrival.iataCode,
+          city: segments[i].arrival.iataCode, // IATA code as fallback
+          duration: durationISO,
+          layoverMinutes: layoverMinutes,
+        });
+      }
+
       return {
         price: parseFloat(offer.price.total),
         currency: offer.price.currency,
@@ -99,6 +118,7 @@ async function searchFlights(
         carrier: segments[0].carrierCode,
         departureTime: segments[0].departure.at,
         arrivalTime: segments[segments.length - 1].arrival.at,
+        layovers: layovers,
       };
     });
 
@@ -157,15 +177,235 @@ function buildSampleFlights(
   returnDate
 ) {
   return sampleFlightsData
-    .map((flight, index) => ({
-      ...flight,
-      originCode,
-      destinationCode,
-      departureDate,
-      returnDate,
-      id: `sample-${index + 1}`,
-    }))
+    .map((flight, index) => {
+      const layovers = generateSampleLayovers(
+        originCode,
+        destinationCode,
+        flight.stops,
+        flight.carrier
+      );
+      return {
+        ...flight,
+        layovers,
+        originCode,
+        destinationCode,
+        departureDate,
+        returnDate,
+        id: `sample-${index + 1}`,
+      };
+    })
     .sort((a, b) => a.price - b.price);
+}
+
+/**
+ * Generate geographically sensible layover cities for sample flights.
+ * Uses the destination airport code to determine region, then picks
+ * realistic connecting hubs along the way.
+ */
+function generateSampleLayovers(originCode, destinationCode, stops, carrier) {
+  if (stops === 0) return [];
+
+  const dest = (destinationCode || "").toUpperCase();
+  const orig = (originCode || "").toUpperCase();
+
+  // Classify destination region by IATA code patterns & known codes
+  const region = getAirportRegion(dest);
+  const originRegion = getAirportRegion(orig);
+
+  // Hub pools by region — each entry is { airport, city, layoverMinutes }
+  const canadaHubs = [
+    { airport: "YYZ", city: "Toronto", layoverMinutes: 105 },
+    { airport: "YUL", city: "Montreal", layoverMinutes: 90 },
+  ];
+  const europeWestHubs = [
+    { airport: "LHR", city: "London", layoverMinutes: 150 },
+    { airport: "CDG", city: "Paris", layoverMinutes: 130 },
+    { airport: "AMS", city: "Amsterdam", layoverMinutes: 110 },
+  ];
+  const europeCentralHubs = [
+    { airport: "FRA", city: "Frankfurt", layoverMinutes: 120 },
+    { airport: "MUC", city: "Munich", layoverMinutes: 135 },
+    { airport: "ZRH", city: "Zurich", layoverMinutes: 100 },
+  ];
+  const europeNorthHubs = [
+    { airport: "CPH", city: "Copenhagen", layoverMinutes: 95 },
+    { airport: "ARN", city: "Stockholm", layoverMinutes: 110 },
+    { airport: "HEL", city: "Helsinki", layoverMinutes: 105 },
+  ];
+  const usEastHubs = [
+    { airport: "JFK", city: "New York", layoverMinutes: 120 },
+    { airport: "IAD", city: "Washington", layoverMinutes: 100 },
+    { airport: "ORD", city: "Chicago", layoverMinutes: 115 },
+  ];
+  const usWestHubs = [
+    { airport: "LAX", city: "Los Angeles", layoverMinutes: 135 },
+    { airport: "SFO", city: "San Francisco", layoverMinutes: 110 },
+    { airport: "SEA", city: "Seattle", layoverMinutes: 95 },
+  ];
+  const middleEastHubs = [
+    { airport: "IST", city: "Istanbul", layoverMinutes: 170 },
+    { airport: "DXB", city: "Dubai", layoverMinutes: 180 },
+    { airport: "DOH", city: "Doha", layoverMinutes: 150 },
+  ];
+  const asiaEastHubs = [
+    { airport: "NRT", city: "Tokyo", layoverMinutes: 140 },
+    { airport: "ICN", city: "Seoul", layoverMinutes: 120 },
+    { airport: "HKG", city: "Hong Kong", layoverMinutes: 130 },
+  ];
+  const asiaSouthHubs = [
+    { airport: "SIN", city: "Singapore", layoverMinutes: 155 },
+    { airport: "BKK", city: "Bangkok", layoverMinutes: 140 },
+  ];
+
+  // Build a route chain based on destination region
+  let hubChain = [];
+
+  switch (region) {
+    case "canada":
+      // Domestic: use Canadian hubs
+      hubChain = [
+        ...canadaHubs,
+        { airport: "YWG", city: "Winnipeg", layoverMinutes: 75 },
+        { airport: "YYC", city: "Calgary", layoverMinutes: 85 },
+        { airport: "YEG", city: "Edmonton", layoverMinutes: 80 },
+      ];
+      break;
+    case "europe-west":
+    case "europe-south":
+      // Canada → (Canadian hub) → European hub
+      hubChain = [...canadaHubs, ...europeWestHubs];
+      break;
+    case "europe-central":
+      hubChain = [...canadaHubs, ...europeWestHubs, ...europeCentralHubs];
+      break;
+    case "europe-north":
+    case "europe-east":
+      hubChain = [...canadaHubs, ...europeWestHubs, ...europeCentralHubs, ...europeNorthHubs];
+      break;
+    case "middle-east":
+      hubChain = [...canadaHubs, ...europeWestHubs, ...middleEastHubs];
+      break;
+    case "asia-east":
+      hubChain = [...canadaHubs, ...usWestHubs, ...asiaEastHubs];
+      break;
+    case "asia-south":
+    case "oceania":
+      hubChain = [...canadaHubs, ...usWestHubs, ...asiaEastHubs, ...asiaSouthHubs];
+      break;
+    case "us-east":
+      hubChain = [...canadaHubs, ...usEastHubs];
+      break;
+    case "us-west":
+      hubChain = [...canadaHubs, ...usWestHubs];
+      break;
+    case "south-america":
+      hubChain = [...canadaHubs, ...usEastHubs, { airport: "MIA", city: "Miami", layoverMinutes: 130 }];
+      break;
+    case "africa":
+      hubChain = [...canadaHubs, ...europeWestHubs, ...middleEastHubs];
+      break;
+    default:
+      // Generic international
+      hubChain = [...canadaHubs, ...europeWestHubs, ...europeCentralHubs];
+      break;
+  }
+
+  // Filter out origin and destination from the chain
+  hubChain = hubChain.filter(
+    (h) => h.airport !== orig && h.airport !== dest
+  );
+
+  // Pick 'stops' hubs, spaced evenly through the chain
+  const selected = [];
+  for (let i = 0; i < stops && i < hubChain.length; i++) {
+    const idx = Math.floor(((i + 1) * hubChain.length) / (stops + 1));
+    const pick = hubChain[Math.min(idx, hubChain.length - 1)];
+    if (!selected.includes(pick)) {
+      selected.push(pick);
+    }
+  }
+
+  // Fallback: if we couldn't pick enough, just take the first N available
+  while (selected.length < stops && hubChain.length > selected.length) {
+    const next = hubChain.find((h) => !selected.includes(h));
+    if (next) selected.push(next);
+    else break;
+  }
+
+  // Format as layover objects
+  return selected.map((hub) => {
+    const hrs = Math.floor(hub.layoverMinutes / 60);
+    const mins = hub.layoverMinutes % 60;
+    const duration = `PT${hrs > 0 ? hrs + "H" : ""}${mins > 0 ? mins + "M" : ""}`;
+    return {
+      airport: hub.airport,
+      city: hub.city,
+      duration,
+      layoverMinutes: hub.layoverMinutes,
+    };
+  });
+}
+
+/**
+ * Classify an IATA airport code into a geographic region.
+ */
+function getAirportRegion(code) {
+  // Canadian airports start with Y
+  if (/^Y[A-Z]{2}$/.test(code)) return "canada";
+
+  const regionMap = {
+    // US East
+    JFK: "us-east", EWR: "us-east", LGA: "us-east", IAD: "us-east", DCA: "us-east",
+    BOS: "us-east", ATL: "us-east", ORD: "us-east", MIA: "us-east", PHL: "us-east",
+    CLT: "us-east", DTW: "us-east", MSP: "us-east",
+    // US West
+    LAX: "us-west", SFO: "us-west", SEA: "us-west", DEN: "us-west", PHX: "us-west",
+    LAS: "us-west", PDX: "us-west", SAN: "us-west", HNL: "us-west",
+    // Europe West
+    LHR: "europe-west", LGW: "europe-west", CDG: "europe-west", ORY: "europe-west",
+    AMS: "europe-west", BRU: "europe-west", DUB: "europe-west",
+    // Europe Central
+    FRA: "europe-central", MUC: "europe-central", ZRH: "europe-central",
+    VIE: "europe-central", PRG: "europe-central", BUD: "europe-central",
+    WAW: "europe-central", GVA: "europe-central",
+    // Europe North
+    CPH: "europe-north", ARN: "europe-north", HEL: "europe-north",
+    OSL: "europe-north", TLL: "europe-north", RIX: "europe-north",
+    VNO: "europe-north", KEF: "europe-north",
+    // Europe South
+    FCO: "europe-south", MAD: "europe-south", BCN: "europe-south",
+    LIS: "europe-south", ATH: "europe-south", MXP: "europe-south",
+    // Europe East
+    SVO: "europe-east", DME: "europe-east", LED: "europe-east",
+    KBP: "europe-east", OTP: "europe-east", SOF: "europe-east",
+    // Middle East
+    IST: "middle-east", DXB: "middle-east", DOH: "middle-east",
+    AUH: "middle-east", TLV: "middle-east", AMM: "middle-east",
+    // Asia East
+    NRT: "asia-east", HND: "asia-east", ICN: "asia-east",
+    PEK: "asia-east", PVG: "asia-east", HKG: "asia-east",
+    TPE: "asia-east", KIX: "asia-east",
+    // Asia South
+    SIN: "asia-south", BKK: "asia-south", KUL: "asia-south",
+    DEL: "asia-south", BOM: "asia-south", CGK: "asia-south",
+    MNL: "asia-south", HAN: "asia-south", SGN: "asia-south",
+    // Oceania
+    SYD: "oceania", MEL: "oceania", AKL: "oceania",
+    BNE: "oceania", PER: "oceania",
+    // Africa
+    JNB: "africa", CAI: "africa", NBO: "africa",
+    CPT: "africa", ADD: "africa", CMN: "africa",
+    // South America
+    GRU: "south-america", EZE: "south-america", BOG: "south-america",
+    SCL: "south-america", LIM: "south-america", GIG: "south-america",
+    // Central America / Caribbean
+    MEX: "south-america", CUN: "south-america", PTY: "south-america",
+    SJU: "south-america", NAS: "south-america",
+    // Australia (alternate)
+    CBR: "oceania",
+  };
+
+  return regionMap[code] || "international";
 }
 
 /**
@@ -440,13 +680,11 @@ function getAirportCode(cityName) {
     shenzhen: "SZX",
     osaka: "KIX",
     taipei: "TPE",
-    seoul: "ICN",
     busan: "PUS",
 
     // Additional Middle Eastern cities
     jerusalem: "TLV",
     amman: "AMM",
-    beirut: "BEY",
     baghdad: "BGW",
     kuwait: "KWI",
     muscat: "MCT",
@@ -479,11 +717,8 @@ function getAirportCode(cityName) {
     panama: "PTY",
     "panama city": "PTY",
     havana: "HAV",
-    "mexico city": "MEX",
     mexicocity: "MEX",
-    "buenos aires": "EZE",
     buenosaires: "EZE",
-    "sao paulo": "GRU",
     saopaulo: "GRU",
 
     // US Cities (Additional)
@@ -507,9 +742,7 @@ function getAirportCode(cityName) {
     kansascity: "MCI",
     "kansas city": "MCI",
     lasvegas: "LAS",
-    "las vegas": "LAS",
     losangeles: "LAX",
-    "los angeles": "LAX",
     louisville: "SDF",
     memphis: "MEM",
     milwaukee: "MKE",
@@ -518,7 +751,6 @@ function getAirportCode(cityName) {
     neworleans: "MSY",
     "new orleans": "MSY",
     newyork: "JFK",
-    "new york": "JFK",
     oklahomacity: "OKC",
     "oklahoma city": "OKC",
     philadelphia: "PHL",
@@ -534,7 +766,6 @@ function getAirportCode(cityName) {
     sandiego: "SAN",
     "san diego": "SAN",
     sanfrancisco: "SFO",
-    "san francisco": "SFO",
     stlouis: "STL",
     "st louis": "STL",
     "st. louis": "STL",

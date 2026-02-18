@@ -1,0 +1,32 @@
+﻿ADM(IM) MONTHLY DIVISIONAL EXPANDED TRAVEL PLAN (MDXTP)
+"Generated: 2/18/2026, 10:51:48 AM"
+
+Serial #,Event? Y/N,Dates,Location,Objective (A),Travel Category (B),Cat 5 Detail,# Public Servants (C),# Non-Public Servants,Rationale Virtual (D),Traveller Names (E),Rationale # Travellers,Transport Rationale (F.1),Accommodation Rationale (G.1),Notes,Transport Cost (F.2),Accommodation Cost (G.2),Meals Cost (H),Incidentals & Other (I),Total,Risk Threshold (J)
+1,N,May 1 - May 10 2026,Tallinn,,,,1,0,,,,"Business class applicable (flight 10.5 hours ≥ 9 hours). Estimated at 2.5x economy cost per NJC Directive Section 3.3.11/3.4.11
+Estimated cost: $3750.00 CAD","Hotel estimate: $209.00/night × 9 nights. Verify rates at government accommodation directory
+
+Rate currency: EUR (≈ $2044.57 CAD)","Daily meal allowance: Breakfast $32.50 + Lunch $54.40 + Dinner $65.55 = $152.45 × 9 days
+Incidental allowance: $48.78/day × 9 days",3750,2044.57,1491.36,477.2,7763.12,
+
+TOTAL,,,,,,,,,,,,,,,3750,2044.57,1491.36,477.2,7763.12,
+
+
+TRIP DETAILS
+Departure City,"Ottawa, ON"
+Destination City,Tallinn
+Destination Type,International (Outside Canada/USA)
+Departure Date,2026-05-01
+Return Date,2026-05-10
+Number of Days,9
+Number of Nights,9
+Transport Mode,flight
+Flight Duration (hours),10.5
+
+COST BREAKDOWN
+Category,Local Amount,Currency,CAD Amount
+Transportation,3750,CAD,3750
+Accommodation,1881,EUR,2044.57
+Meals,1372.05,EUR,1491.36
+Incidentals,439.02,EUR,477.2
+
+Total (CAD),,,7763.12

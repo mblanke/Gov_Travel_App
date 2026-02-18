@@ -1,277 +1,531 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+/**
+ * Database Service - Normalized Schema
+ *
+ * This service provides methods to query the normalized travel rates database.
+ * Tables: regions, accommodation_limits, meal_rates, incidental_rates,
+ *         private_accommodation_rates, kilometric_rates, weekend_travel_allowances
+ */
+
+const Database = require("better-sqlite3");
+const path = require("path");
 
 class DatabaseService {
-    constructor() {
-        this.dbPath = path.join(__dirname, '..', 'database', 'travel_rates.db');
-        this.db = null;
-    }
+  constructor() {
+    this.dbPath = path.join(__dirname, "..", "database", "travel_rates.db");
+    this.db = null;
+  }
 
-    connect() {
-        return new Promise((resolve, reject) => {
-            this.db = new sqlite3.Database(this.dbPath, (err) => {
-                if (err) {
-                    console.error('❌ Database connection failed:', err);
-                    reject(err);
-                } else {
-                    console.log('✅ Database connected');
-                    resolve();
-                }
-            });
-        });
+  /**
+   * Connect to database (synchronous with better-sqlite3)
+   */
+  connect() {
+    try {
+      this.db = new Database(this.dbPath, { readonly: false });
+      console.log("✅ Database connected");
+      return Promise.resolve();
+    } catch (err) {
+      console.error("❌ Database connection failed:", err);
+      return Promise.reject(err);
     }
+  }
 
-    /**
-     * Search for a city (complete travel rates)
-     * GUARANTEED to find Canberra!
-     */
-    async searchCity(searchTerm) {
-        const query = `
-            SELECT * FROM travel_rates
-            WHERE LOWER(city_name) LIKE LOWER(?) 
-            OR LOWER(city_key) LIKE LOWER(?)
-            OR LOWER(country) LIKE LOWER(?)
-            OR LOWER(province) LIKE LOWER(?)
+  /**
+   * Search for cities by name, country, or province
+   * Returns accommodation limits with associated meal rates
+   */
+  searchCity(searchTerm) {
+    const term = `%${searchTerm}%`;
+    const exactTerm = searchTerm.toLowerCase();
+    const likeTerm = `${searchTerm.toLowerCase()}%`;
+
+    const query = `
+            SELECT 
+                a.*,
+                r.name AS region_name,
+                r.taxes_included,
+                m.breakfast,
+                m.lunch,
+                m.dinner,
+                m.total AS meals_total,
+                m.currency AS meals_currency,
+                i.rate AS incidentals,
+                i.currency AS incidentals_currency
+            FROM accommodation_limits a
+            JOIN regions r ON a.region_code = r.code
+            LEFT JOIN meal_rates m ON (
+                (m.region_code = a.region_code AND m.city_key IS NULL)
+                OR m.city_key = a.city_key
+            ) AND m.accommodation_type = 'commercial' AND m.duration_tier = 'day_1_30'
+            LEFT JOIN incidental_rates i ON (
+                (i.region_code = a.region_code AND i.city_key IS NULL)
+                OR i.city_key = a.city_key
+            ) AND i.accommodation_type = 'commercial' AND i.duration_tier = 'day_1_30'
+            WHERE LOWER(a.city_name) LIKE LOWER(?) 
+               OR LOWER(a.city_key) LIKE LOWER(?)
+               OR LOWER(a.country) LIKE LOWER(?)
+               OR LOWER(a.province_state) LIKE LOWER(?)
             ORDER BY 
                 CASE 
-                    WHEN LOWER(city_name) = LOWER(?) THEN 1
-                    WHEN LOWER(city_key) = LOWER(?) THEN 2
-                    WHEN LOWER(city_name) LIKE LOWER(?) THEN 3
+                    WHEN LOWER(a.city_name) = ? THEN 1
+                    WHEN LOWER(a.city_key) = ? THEN 2
+                    WHEN LOWER(a.city_name) LIKE ? THEN 3
                     ELSE 4
                 END
             LIMIT 10
         `;
 
-        const term = `%${searchTerm}%`;
-        const exactTerm = searchTerm.toLowerCase();
-        const likeTerm = `${searchTerm.toLowerCase()}%`;
-
-        return new Promise((resolve, reject) => {
-            this.db.all(query, [term, term, term, term, exactTerm, exactTerm, likeTerm], (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows ? rows.map(row => this.formatTravelRate(row)) : []);
-            });
-        });
+    try {
+      const rows = this.db
+        .prepare(query)
+        .all(term, term, term, term, exactTerm, exactTerm, likeTerm);
+      return Promise.resolve(rows.map((row) => this.formatTravelRate(row)));
+    } catch (err) {
+      return Promise.reject(err);
     }
+  }
 
-    /**
-     * Get complete travel rate by exact city key
-     */
-    async getAccommodationRate(cityKey) {
-        const query = `SELECT * FROM travel_rates WHERE LOWER(city_key) = LOWER(?) LIMIT 1`;
+  /**
+   * Get accommodation rate by exact city key
+   */
+  getAccommodationRate(cityKey, options = {}) {
+    const {
+      accommodationType = "commercial",
+      durationTier = "day_1_30",
+      month = null,
+    } = options;
 
-        return new Promise((resolve, reject) => {
-            this.db.get(query, [cityKey], (err, row) => {
-                if (err) reject(err);
-                else resolve(row ? this.formatTravelRate(row) : null);
-            });
-        });
+    const query = `
+            SELECT 
+                a.*,
+                r.name AS region_name,
+                r.taxes_included,
+                m.breakfast,
+                m.lunch,
+                m.dinner,
+                m.total AS meals_total,
+                m.currency AS meals_currency,
+                i.rate AS incidentals,
+                i.currency AS incidentals_currency
+            FROM accommodation_limits a
+            JOIN regions r ON a.region_code = r.code
+            LEFT JOIN meal_rates m ON (
+                (m.region_code = a.region_code AND m.city_key IS NULL)
+                OR m.city_key = a.city_key
+            ) AND m.accommodation_type = ? AND m.duration_tier = ?
+            LEFT JOIN incidental_rates i ON (
+                (i.region_code = a.region_code AND i.city_key IS NULL)
+                OR i.city_key = a.city_key
+            ) AND i.accommodation_type = ? AND i.duration_tier = ?
+            WHERE LOWER(a.city_key) = LOWER(?)
+            LIMIT 1
+        `;
+
+    try {
+      const row = this.db
+        .prepare(query)
+        .get(
+          accommodationType,
+          durationTier,
+          accommodationType,
+          durationTier,
+          cityKey
+        );
+      return Promise.resolve(row ? this.formatTravelRate(row, month) : null);
+    } catch (err) {
+      return Promise.reject(err);
     }
+  }
 
-    /**
-     * Get accommodation rate for a specific month
-     */
-    async getMonthlyRate(cityKey, month) {
-        const rate = await this.getAccommodationRate(cityKey);
-        
-        if (!rate) return null;
+  /**
+   * Get rate for specific month
+   */
+  getMonthlyRate(cityKey, month) {
+    return this.getAccommodationRate(cityKey, { month });
+  }
 
-        const monthIndex = month - 1; // 0-based index
-        return {
-            city: rate.name,
-            month: month,
-            rate: rate.monthlyRates[monthIndex],
-            currency: rate.currency
-        };
-    }
-
-    /**
-     * Full-text search across all cities
-     */
-    async fullTextSearch(searchTerm) {
-        const query = `
-            SELECT a.* FROM travel_rates a
+  /**
+   * Full-text search using FTS5 index
+   */
+  fullTextSearch(searchTerm) {
+    const query = `
+            SELECT 
+                a.*,
+                r.name AS region_name,
+                r.taxes_included,
+                m.breakfast,
+                m.lunch,
+                m.dinner,
+                m.total AS meals_total,
+                m.currency AS meals_currency,
+                i.rate AS incidentals,
+                i.currency AS incidentals_currency
+            FROM accommodation_limits a
+            JOIN regions r ON a.region_code = r.code
+            LEFT JOIN meal_rates m ON (
+                (m.region_code = a.region_code AND m.city_key IS NULL)
+                OR m.city_key = a.city_key
+            ) AND m.accommodation_type = 'commercial' AND m.duration_tier = 'day_1_30'
+            LEFT JOIN incidental_rates i ON (
+                (i.region_code = a.region_code AND i.city_key IS NULL)
+                OR i.city_key = a.city_key
+            ) AND i.accommodation_type = 'commercial' AND i.duration_tier = 'day_1_30'
             WHERE a.id IN (
-                SELECT rowid FROM travel_search 
-                WHERE travel_search MATCH ?
+                SELECT rowid FROM accommodation_search 
+                WHERE accommodation_search MATCH ?
             )
             ORDER BY 
-                CASE 
-                    WHEN LOWER(a.city_name) = LOWER(?) THEN 1
-                    ELSE 2
-                END
+                CASE WHEN LOWER(a.city_name) = LOWER(?) THEN 1 ELSE 2 END
             LIMIT 20
         `;
 
-        return new Promise((resolve, reject) => {
-            this.db.all(query, [searchTerm, searchTerm], (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows.map(row => this.formatTravelRate(row)));
-            });
-        });
+    try {
+      const rows = this.db.prepare(query).all(searchTerm, searchTerm);
+      return Promise.resolve(rows.map((row) => this.formatTravelRate(row)));
+    } catch (err) {
+      // Fallback to LIKE search if FTS fails
+      return this.searchCity(searchTerm);
     }
+  }
 
-    /**
-     * Format complete travel rate for API response
-     */
-    formatTravelRate(row) {
-        return {
-            cityKey: row.city_key,
-            name: row.city_name,
-            province: row.province,
-            country: row.country,
-            region: row.region,
-            currency: row.currency,
-            accommodation: {
-                monthly: [
-                    row.jan_accommodation, row.feb_accommodation, row.mar_accommodation, 
-                    row.apr_accommodation, row.may_accommodation, row.jun_accommodation,
-                    row.jul_accommodation, row.aug_accommodation, row.sep_accommodation, 
-                    row.oct_accommodation, row.nov_accommodation, row.dec_accommodation
-                ],
-                standard: row.standard_accommodation
-            },
-            meals: {
-                breakfast: row.breakfast,
-                lunch: row.lunch,
-                dinner: row.dinner,
-                total: row.total_meals
-            },
-            incidentals: row.incidentals,
-            totalDailyAllowance: row.total_daily_allowance,
-            fullDayCost: parseFloat(row.standard_accommodation || row.jan_accommodation) + parseFloat(row.total_daily_allowance),
-            isInternational: row.is_international === 1
-        };
+  /**
+   * Get all regions
+   */
+  getAllRegions() {
+    const query = `SELECT code, name, default_currency FROM regions ORDER BY name`;
+    try {
+      const rows = this.db.prepare(query).all();
+      return Promise.resolve(rows);
+    } catch (err) {
+      return Promise.reject(err);
     }
+  }
 
-    /**
-     * Legacy format for backward compatibility
-     */
-    formatAccommodationRate(row) {
-        return {
-            cityKey: row.city_key,
-            name: row.city_name,
-            province: row.province,
-            country: row.country,
-            region: row.region,
-            currency: row.currency,
-            monthlyRates: [
-                row.jan_accommodation || row.jan_rate, 
-                row.feb_accommodation || row.feb_rate, 
-                row.mar_accommodation || row.mar_rate, 
-                row.apr_accommodation || row.apr_rate,
-                row.may_accommodation || row.may_rate, 
-                row.jun_accommodation || row.jun_rate, 
-                row.jul_accommodation || row.jul_rate, 
-                row.aug_accommodation || row.aug_rate,
-                row.sep_accommodation || row.sep_rate, 
-                row.oct_accommodation || row.oct_rate, 
-                row.nov_accommodation || row.nov_rate, 
-                row.dec_accommodation || row.dec_rate
-            ],
-            standardRate: row.standard_accommodation || row.standard_rate,
-            isInternational: row.is_international === 1,
-            effectiveDate: row.effective_date
-        };
+  /**
+   * Get all countries
+   */
+  getAllCountries() {
+    const query = `SELECT DISTINCT country FROM accommodation_limits ORDER BY country`;
+    try {
+      const rows = this.db.prepare(query).all();
+      return Promise.resolve(rows.map((r) => r.country));
+    } catch (err) {
+      return Promise.reject(err);
     }
+  }
 
-    /**
-     * List all cities by region
-     */
-    async getCitiesByRegion(region) {
-        const query = `
-            SELECT * FROM travel_rates 
-            WHERE region = ? 
-            ORDER BY city_name
+  /**
+   * Get cities by region
+   */
+  getCitiesByRegion(regionCode) {
+    const query = `
+            SELECT 
+                a.*,
+                r.name AS region_name,
+                m.total AS meals_total,
+                i.rate AS incidentals
+            FROM accommodation_limits a
+            JOIN regions r ON a.region_code = r.code
+            LEFT JOIN meal_rates m ON m.region_code = a.region_code 
+                AND m.city_key IS NULL 
+                AND m.accommodation_type = 'commercial' 
+                AND m.duration_tier = 'day_1_30'
+            LEFT JOIN incidental_rates i ON i.region_code = a.region_code 
+                AND i.city_key IS NULL 
+                AND i.accommodation_type = 'commercial' 
+                AND i.duration_tier = 'day_1_30'
+            WHERE a.region_code = ?
+            ORDER BY a.city_name
         `;
 
-        return new Promise((resolve, reject) => {
-            this.db.all(query, [region], (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows.map(row => this.formatAccommodationRate(row)));
-            });
-        });
+    try {
+      const rows = this.db.prepare(query).all(regionCode);
+      return Promise.resolve(rows.map((row) => this.formatTravelRate(row)));
+    } catch (err) {
+      return Promise.reject(err);
     }
+  }
 
-    /**
-     * List all cities by country
-     */
-    async getCitiesByCountry(country) {
-        const query = `
-            SELECT * FROM travel_rates 
-            WHERE LOWER(country) = LOWER(?) 
-            ORDER BY city_name
+  /**
+   * Get cities by country
+   */
+  getCitiesByCountry(country) {
+    const query = `
+            SELECT 
+                a.*,
+                r.name AS region_name,
+                m.breakfast, m.lunch, m.dinner,
+                m.total AS meals_total,
+                m.currency AS meals_currency,
+                i.rate AS incidentals,
+                i.currency AS incidentals_currency
+            FROM accommodation_limits a
+            JOIN regions r ON a.region_code = r.code
+            LEFT JOIN meal_rates m ON (
+                (m.region_code = a.region_code AND m.city_key IS NULL)
+                OR m.city_key = a.city_key
+            ) AND m.accommodation_type = 'commercial' AND m.duration_tier = 'day_1_30'
+            LEFT JOIN incidental_rates i ON (
+                (i.region_code = a.region_code AND i.city_key IS NULL)
+                OR i.city_key = a.city_key
+            ) AND i.accommodation_type = 'commercial' AND i.duration_tier = 'day_1_30'
+            WHERE LOWER(a.country) = LOWER(?)
+            ORDER BY a.city_name
         `;
 
-        return new Promise((resolve, reject) => {
-            this.db.all(query, [country], (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows.map(row => this.formatAccommodationRate(row)));
-            });
-        });
+    try {
+      const rows = this.db.prepare(query).all(country);
+      return Promise.resolve(rows.map((row) => this.formatTravelRate(row)));
+    } catch (err) {
+      return Promise.reject(err);
     }
+  }
 
-    /**
-     * Get all available regions
-     */
-    async getAllRegions() {
-        const query = `SELECT DISTINCT region FROM travel_rates ORDER BY region`;
+  /**
+   * Autocomplete search
+   */
+  autocomplete(prefix, limit = 10) {
+    const term = `${prefix}%`;
 
-        return new Promise((resolve, reject) => {
-            this.db.all(query, [], (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows.map(row => row.region));
-            });
-        });
-    }
-
-    /**
-     * Get all available countries
-     */
-    async getAllCountries() {
-        const query = `SELECT DISTINCT country FROM travel_rates ORDER BY country`;
-
-        return new Promise((resolve, reject) => {
-            this.db.all(query, [], (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows.map(row => row.country));
-            });
-        });
-    }
-
-    /**
-     * Autocomplete for city search
-     */
-    async autocomplete(prefix, limit = 10) {
-        const query = `
-            SELECT city_name, country, region FROM travel_rates
+    const query = `
+            SELECT city_name, city_key, country, region_code, province_state
+            FROM accommodation_limits
             WHERE LOWER(city_name) LIKE LOWER(?)
+               OR LOWER(city_key) LIKE LOWER(?)
             ORDER BY 
-                CASE 
-                    WHEN LOWER(city_name) LIKE LOWER(?) THEN 1
-                    ELSE 2
-                END,
+                CASE WHEN LOWER(city_name) LIKE LOWER(?) THEN 1 ELSE 2 END,
                 city_name
             LIMIT ?
         `;
 
-        const term = `${prefix}%`;
-        const exactTerm = `${prefix}`;
-
-        return new Promise((resolve, reject) => {
-            this.db.all(query, [term, exactTerm, limit], (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows);
-            });
-        });
+    try {
+      const rows = this.db
+        .prepare(query)
+        .all(term, term, prefix.toLowerCase() + "%", limit);
+      return Promise.resolve(rows);
+    } catch (err) {
+      return Promise.reject(err);
     }
+  }
 
-    close() {
-        if (this.db) {
-            this.db.close();
-            console.log('✅ Database connection closed');
-        }
+  /**
+   * Get kilometric rate by province
+   */
+  getKilometricRate(provinceCode) {
+    const query = `
+            SELECT * FROM kilometric_rates 
+            WHERE province_code = ? OR LOWER(province_territory) LIKE LOWER(?)
+        `;
+
+    try {
+      const row = this.db.prepare(query).get(provinceCode, `%${provinceCode}%`);
+      return Promise.resolve(row);
+    } catch (err) {
+      return Promise.reject(err);
     }
+  }
+
+  /**
+   * Get all kilometric rates
+   */
+  getAllKilometricRates() {
+    const query = `SELECT * FROM kilometric_rates ORDER BY province_territory`;
+    try {
+      const rows = this.db.prepare(query).all();
+      return Promise.resolve(rows);
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  /**
+   * Get private accommodation rate
+   */
+  getPrivateAccommodationRate(regionCode, tripDays) {
+    const tier = tripDays <= 120 ? "day_1_120" : "day_121_plus";
+
+    const query = `
+            SELECT * FROM private_accommodation_rates
+            WHERE region_code = ? AND duration_tier = ?
+        `;
+
+    try {
+      const row = this.db.prepare(query).get(regionCode, tier);
+      return Promise.resolve(row);
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  /**
+   * Get meal rates for a specific configuration
+   */
+  getMealRates(
+    regionCode,
+    cityKey = null,
+    accommodationType = "commercial",
+    tripDays = 1
+  ) {
+    let durationTier;
+    if (tripDays <= 30) durationTier = "day_1_30";
+    else if (tripDays <= 120) durationTier = "day_31_120";
+    else durationTier = "day_121_plus";
+
+    const query = cityKey
+      ? `SELECT * FROM meal_rates WHERE region_code = ? AND city_key = ? AND accommodation_type = ? AND duration_tier = ?`
+      : `SELECT * FROM meal_rates WHERE region_code = ? AND city_key IS NULL AND accommodation_type = ? AND duration_tier = ?`;
+
+    try {
+      const row = cityKey
+        ? this.db
+            .prepare(query)
+            .get(regionCode, cityKey, accommodationType, durationTier)
+        : this.db
+            .prepare(query)
+            .get(regionCode, accommodationType, durationTier);
+      return Promise.resolve(row);
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  /**
+   * Get weekend travel allowance
+   */
+  getWeekendAllowance(regionCode, weekendLength) {
+    const query = `
+            SELECT * FROM weekend_travel_allowances
+            WHERE region_code = ? AND weekend_length = ?
+        `;
+
+    try {
+      const row = this.db.prepare(query).get(regionCode, weekendLength);
+      return Promise.resolve(row);
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  /**
+   * Format database row into API response
+   */
+  formatTravelRate(row, targetMonth = null) {
+    const monthNames = [
+      "jan",
+      "feb",
+      "mar",
+      "apr",
+      "may",
+      "jun",
+      "jul",
+      "aug",
+      "sep",
+      "oct",
+      "nov",
+      "dec",
+    ];
+
+    // Build monthly rates array
+    const monthlyRates = monthNames.map((m) => row[`${m}_rate`]);
+
+    // Determine which month's rate to use (default: current month)
+    const monthIndex = targetMonth ? targetMonth - 1 : new Date().getMonth();
+
+    const currentAccommodationRate =
+      monthlyRates[monthIndex] || row.default_rate;
+
+    // Calculate daily totals
+    const mealsTotal =
+      row.meals_total ||
+      (row.breakfast || 0) + (row.lunch || 0) + (row.dinner || 0);
+    const incidentals = row.incidentals || 0;
+    const dailyAllowance = mealsTotal + incidentals;
+
+    return {
+      // Identity
+      cityKey: row.city_key,
+      name: row.city_name,
+      province: row.province_state,
+      country: row.country,
+      region: row.region_code,
+      regionName: row.region_name,
+
+      // Accommodation (what hotels cost - city-specific)
+      accommodation_currency: row.currency,
+      accommodation: {
+        monthly: monthlyRates,
+        standard: row.default_rate,
+        current: currentAccommodationRate,
+      },
+      accommodation_rate: currentAccommodationRate,
+
+      // Meals (per diem - region or city-specific)
+      currency: row.meals_currency || row.currency,
+      meals: {
+        breakfast: row.breakfast || 0,
+        lunch: row.lunch || 0,
+        dinner: row.dinner || 0,
+        total: mealsTotal,
+      },
+
+      // Incidentals
+      incidentals: incidentals,
+
+      // Totals
+      totalDailyAllowance: dailyAllowance,
+      fullDayCost: currentAccommodationRate + dailyAllowance,
+
+      // Metadata
+      isInternational: row.region_code === "international",
+      taxesIncluded: row.taxes_included === 1,
+      isCapital: row.is_capital === 1,
+    };
+  }
+
+  /**
+   * Legacy alias for backwards compatibility
+   */
+  formatAccommodationRate(row) {
+    return this.formatTravelRate(row);
+  }
+
+  /**
+   * Get database stats
+   */
+  getStats() {
+    try {
+      const stats = {
+        accommodations: this.db
+          .prepare("SELECT COUNT(*) as count FROM accommodation_limits")
+          .get().count,
+        mealRates: this.db
+          .prepare("SELECT COUNT(*) as count FROM meal_rates")
+          .get().count,
+        incidentalRates: this.db
+          .prepare("SELECT COUNT(*) as count FROM incidental_rates")
+          .get().count,
+        regions: this.db.prepare("SELECT COUNT(*) as count FROM regions").get()
+          .count,
+        countries: this.db
+          .prepare(
+            "SELECT COUNT(DISTINCT country) as count FROM accommodation_limits"
+          )
+          .get().count,
+      };
+      return Promise.resolve(stats);
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  /**
+   * Close database connection
+   */
+  close() {
+    if (this.db) {
+      this.db.close();
+      console.log("✅ Database connection closed");
+    }
+  }
 }
 
 module.exports = new DatabaseService();

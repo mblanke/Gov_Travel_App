@@ -420,10 +420,10 @@ class KeyboardShortcuts {
     showHelp() {
         const overlay = document.createElement('div');
         overlay.className = 'shortcuts-help-overlay';
-        overlay.onclick = () => {
+        overlay.addEventListener('click', () => {
             overlay.remove();
             modal.remove();
-        };
+        });
         
         const modal = document.createElement('div');
         modal.className = 'shortcuts-help-modal';
@@ -453,11 +453,16 @@ class KeyboardShortcuts {
                 <span>Close modals</span>
                 <span class="shortcut-key">Esc</span>
             </div>
-            <button onclick="this.parentElement.parentElement.previousSibling.remove(); this.parentElement.remove()" 
+            <button data-action="close-modal"
                     style="margin-top: 20px; padding: 8px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
                 Close
             </button>
         `;
+        
+        modal.querySelector('[data-action="close-modal"]').addEventListener('click', () => {
+            overlay.remove();
+            modal.remove();
+        });
         
         document.body.appendChild(overlay);
         document.body.appendChild(modal);
@@ -576,10 +581,10 @@ class TripHistory {
         
         const overlay = document.createElement('div');
         overlay.className = 'shortcuts-help-overlay';
-        overlay.onclick = () => {
+        overlay.addEventListener('click', () => {
             overlay.remove();
             modal.remove();
-        };
+        });
         
         const modal = document.createElement('div');
         modal.className = 'trip-history-modal';
@@ -588,7 +593,7 @@ class TripHistory {
             modal.innerHTML = `
                 <h3>📚 Trip History</h3>
                 <p>No saved trips yet. Complete a trip estimate to save it to history.</p>
-                <button onclick="this.parentElement.parentElement.previousSibling.remove(); this.parentElement.remove()" 
+                <button data-action="close-modal"
                         style="margin-top: 20px; padding: 8px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
                     Close
                 </button>
@@ -600,7 +605,7 @@ class TripHistory {
             history.forEach(trip => {
                 const date = new Date(trip.savedAt).toLocaleString();
                 html += `
-                    <div class="trip-item" onclick="window.tripHistory.load(${trip.id})">
+                    <div class="trip-item" data-trip-id="${trip.id}">
                         <div class="trip-item-header">
                             ${trip.departureCity || 'Unknown'} → ${trip.destinationCity || 'Unknown'}
                         </div>
@@ -613,11 +618,11 @@ class TripHistory {
             
             html += `
                 <div style="margin-top: 20px; display: flex; gap: 10px;">
-                    <button onclick="window.tripHistory.clearAll()" 
+                    <button data-action="clear-all"
                             style="padding: 8px 20px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
                         Clear All
                     </button>
-                    <button onclick="this.parentElement.parentElement.parentElement.previousSibling.remove(); this.parentElement.parentElement.remove()" 
+                    <button data-action="close-modal"
                             style="padding: 8px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
                         Close
                     </button>
@@ -625,7 +630,25 @@ class TripHistory {
             `;
             
             modal.innerHTML = html;
+            
+            // Attach trip item click listeners
+            modal.querySelectorAll('[data-trip-id]').forEach(item => {
+                item.addEventListener('click', () => {
+                    window.tripHistory.load(parseInt(item.dataset.tripId, 10));
+                });
+            });
+            
+            // Attach clear all listener
+            const clearBtn = modal.querySelector('[data-action="clear-all"]');
+            if (clearBtn) clearBtn.addEventListener('click', () => window.tripHistory.clearAll());
         }
+        
+        // Attach close button listener
+        const closeBtn = modal.querySelector('[data-action="close-modal"]');
+        if (closeBtn) closeBtn.addEventListener('click', () => {
+            overlay.remove();
+            modal.remove();
+        });
         
         document.body.appendChild(overlay);
         document.body.appendChild(modal);

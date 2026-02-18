@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dcterms.title" content="Government Travel Cost Estimator">
+    <meta name="dcterms.language" content="eng">
+    <meta name="dcterms.creator" content="Government of Canada">
+    <title>Government Travel Cost Estimator - Canada.ca</title>
+    <link rel="stylesheet" href="styles.css?v=20260219-1400">
+    <link rel="stylesheet" href="styles_voice.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
+
+<body>
+    <!-- Skip to content for accessibility -->
+    <a class="skip-link" href="#main">Skip to main content</a>
+
+    <!-- GC FIP Header -->
+    <div class="gc-fip-bar" role="banner">
+        <div class="gc-fip-container">
+            <div class="gc-fip-wordmark">
+                <span class="gc-flag" aria-hidden="true"></span>
+                <span class="gc-wordmark-text">Government of Canada / <span lang="fr">Gouvernement du
+                        Canada</span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="gc-nav" role="navigation" aria-label="Primary navigation">
+        <div class="gc-nav-container">
+            <span class="gc-nav-title">Travel Cost Estimator</span>
+            <ul class="gc-nav-links">
+                <li><a href="validation.html">Database Status</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <main id="main" role="main">
+            <div class="gc-page-header">
+                <h1>Government Travel Cost Estimator</h1>
+                <p class="gc-lead">Estimate travel costs based on the NJC Travel Directive</p>
+            </div>
+
+            <!-- Validation error summary (hidden by default) -->
+            <div id="errorSummary" class="gc-error-summary" role="alert" aria-live="polite" style="display: none;">
+                <h2>There are errors on this page</h2>
+                <ul id="errorList"></ul>
+            </div>
+
+            <form id="travelForm" novalidate>
+                <section class="form-section">
+                    <h2>Travel Details</h2>
+
+                    <div class="form-group city-input-wrapper">
+                        <label for="departureCity">Departure City <span class="gc-required"
+                                aria-hidden="true">*</span></label>
+                        <input type="text" id="departureCity" required placeholder="e.g., Ottawa" autocomplete="off"
+                            aria-required="true" aria-describedby="departureCityHelp departureCityStatus">
+                        <div id="departureCitySuggestions" class="city-suggestions" style="display:none;"></div>
+                        <small id="departureCityHelp">Type at least 2 characters to see suggestions</small>
+                        <small id="departureCityStatus" class="field-status" style="display: none;"
+                            role="status"></small>
+                    </div>
+
+                    <div class="form-group city-input-wrapper">
+                        <label for="destinationCity">Destination City <span class="gc-required"
+                                aria-hidden="true">*</span></label>
+                        <input type="text" id="destinationCity" required placeholder="e.g., Vancouver"
+                            autocomplete="off" aria-required="true"
+                            aria-describedby="destinationCityHelp destinationCityStatus">
+                        <div id="destinationCitySuggestions" class="city-suggestions" style="display:none;"></div>
+                        <small id="destinationCityHelp">Type at least 2 characters to see suggestions</small>
+                        <small id="destinationCityStatus" class="field-status" style="display: none;"
+                            role="status"></small>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="departureDate">Departure Date <span class="gc-required"
+                                    aria-hidden="true">*</span></label>
+                            <input type="date" id="departureDate" required aria-required="true">
+                        </div>
+                        <div class="form-group">
+                            <label for="returnDate">Return Date <span class="gc-required"
+                                    aria-hidden="true">*</span></label>
+                            <input type="date" id="returnDate" required aria-required="true">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="destinationType">Destination Type <span class="gc-required"
+                                aria-hidden="true">*</span></label>
+                        <select id="destinationType" required aria-required="true">
+                            <option value="">-- Select Destination Type --</option>
+                            <option value="canada">Canada</option>
+                            <option value="yukon">Yukon</option>
+                            <option value="nwt">Northwest Territories</option>
+                            <option value="nunavut">Nunavut</option>
+                            <option value="usa">Continental USA</option>
+                            <option value="alaska">Alaska</option>
+                            <option value="international">International (Outside Canada/USA)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="transportMode">Transportation Mode <span class="gc-required"
+                                aria-hidden="true">*</span></label>
+                        <select id="transportMode" required aria-required="true">
+                            <option value="">-- Select Transportation --</option>
+                            <option value="flight">Flight</option>
+                            <option value="vehicle">Personal Vehicle</option>
+                            <option value="train">Train</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="flightOptionsGroup" style="display: none;">
+                        <button type="button" id="searchFlightsBtn" class="btn-primary btn-flight-search"
+                            aria-label="Search for flights automatically">
+                            Search Flights Automatically
+                        </button>
+                        <div id="flightSearchStatus" class="flight-status" style="display: none;" role="status"
+                            aria-live="polite"></div>
+                        <div id="flightResults" style="display: none;"></div>
+                        <small>Click search to find flights and automatically populate duration and cost</small>
+                    </div>
+
+                    <div class="form-group" id="vehicleOptionsGroup" style="display: none;">
+                        <label for="distanceKm">Estimated Distance (km) <span class="gc-required"
+                                aria-hidden="true">*</span></label>
+                        <input type="number" id="distanceKm" min="0" step="1" placeholder="e.g., 450"
+                            aria-describedby="distanceHelp">
+                        <small id="distanceHelp">Kilometric rates apply based on NJC Appendix B</small>
+                    </div>
+
+                    <!-- Ground Transportation Sub-Section -->
+                    <fieldset id="groundTransportGroup" class="ground-transport-fieldset" style="display: none;">
+                        <legend>Ground Transportation (Local)</legend>
+                        <small class="fieldset-help">Taxi or car rental costs between home ↔ airport and airport ↔
+                            hotel</small>
+
+                        <div class="form-group">
+                            <label for="groundTransportType">Ground Transport Type</label>
+                            <select id="groundTransportType">
+                                <option value="none">None</option>
+                                <option value="taxi">Taxi / Rideshare</option>
+                                <option value="rental">Car Rental</option>
+                            </select>
+                        </div>
+
+                        <div id="groundTransportFields" style="display: none;">
+                            <div class="form-group">
+                                <label for="originGroundCost">Home ↔ Departure Airport (CAD)</label>
+                                <input type="number" id="originGroundCost" min="0" step="0.01" placeholder="e.g., 45.00"
+                                    aria-describedby="originGroundHelp">
+                                <small id="originGroundHelp">One-way cost from home to departure airport</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="destinationGroundCost">Destination Airport ↔ Hotel (CAD)</label>
+                                <input type="number" id="destinationGroundCost" min="0" step="0.01"
+                                    placeholder="e.g., 35.00" aria-describedby="destGroundHelp">
+                                <small id="destGroundHelp">One-way cost from destination airport to hotel</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="groundTransportReturn" checked>
+                                    Include return trips (round-trip)
+                                </label>
+                                <small>Doubles ground transport costs to include return legs</small>
+                            </div>
+                        </div>
+                    </fieldset>
+                </section>
+
+                <section class="form-section">
+                    <h2>Cost Estimates</h2>
+
+                    <!-- Hidden fields for flight data -->
+                    <input type="hidden" id="flightDuration">
+                    <input type="hidden" id="estimatedFlightCost">
+
+                    <div class="form-group" id="flightCostGroup" style="display: none;">
+                        <div id="selectedFlightInfo" class="gc-alert gc-alert-success" style="display: none;">
+                            <h4>Flight Selected</h4>
+                            <p id="selectedFlightDetails"></p>
+                        </div>
+                        <small>
+                            Or <a href="#" id="googleFlightsLink" target="_blank" rel="noopener noreferrer">manually
+                                search Google Flights</a>
+                        </small>
+                    </div>
+
+                    <div class="form-group" id="trainCostGroup" style="display: none;">
+                        <label for="estimatedTrainCost">Estimated Train Cost (CAD)</label>
+                        <input type="number" id="estimatedTrainCost" min="0" step="0.01" placeholder="e.g., 150"
+                            aria-describedby="trainHelp">
+                        <small id="trainHelp">Check VIA Rail, Amtrak, or local rail services for fares</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="estimatedAccommodationPerNight">Accommodation per Night (CAD)</label>
+                        <input type="number" id="estimatedAccommodationPerNight" min="0" step="0.01" readonly
+                            class="input-readonly" placeholder="Will be calculated automatically"
+                            aria-describedby="accommodationSuggestion">
+                        <small id="accommodationSuggestion" class="field-success">Rate will be looked up automatically
+                            based on destination city</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="privateAccommodation">
+                            Using Private Non-Commercial Accommodation
+                        </label>
+                        <small>Check if staying with family/friends instead of hotel</small>
+                    </div>
+                </section>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Calculate Estimate</button>
+                    <button type="reset" class="btn-secondary">Clear Form</button>
+                </div>
+            </form>
+
+            <div id="results" class="results hidden">
+                <h2>Travel Cost Estimate</h2>
+
+                <div class="results-summary">
+                    <div class="summary-card">
+                        <h3>Total Estimated Cost</h3>
+                        <p class="total-amount" id="totalCost">$0.00</p>
+                    </div>
+                    <div class="results-actions">
+                        <button type="button" id="exportMdxtpBtn" class="btn-export" aria-label="Export MDXTP Excel">
+                            📊 Export MDXTP (.xlsx)
+                        </button>
+                        <button type="button" id="exportCsvBtn" class="btn-export" aria-label="Export MDXTP CSV">
+                            📄 Export CSV
+                        </button>
+                        <button type="button" id="printBtn" class="btn-print" aria-label="Print estimate">
+                            🖨️ Print
+                        </button>
+                    </div>
+                </div>
+
+                <div class="results-breakdown">
+                    <h3>Cost Breakdown</h3>
+
+                    <div class="breakdown-item">
+                        <div class="item-header">
+                            <span class="item-label" id="transportLabel">Transportation Cost</span>
+                            <span class="item-amount" id="transportCost">$0.00</span>
+                        </div>
+                        <p class="item-note" id="transportNote"></p>
+                    </div>
+
+                    <div class="breakdown-item" id="groundTransportBreakdown" style="display: none;">
+                        <div class="item-header">
+                            <span class="item-label" id="groundTransportLabel">Ground Transportation</span>
+                            <span class="item-amount" id="groundTransportCostEl">$0.00</span>
+                        </div>
+                        <p class="item-note" id="groundTransportNote"></p>
+                    </div>
+
+                    <div class="breakdown-item">
+                        <div class="item-header">
+                            <span class="item-label">Accommodation</span>
+                            <span class="item-amount" id="accommodationCost">$0.00</span>
+                        </div>
+                        <p class="item-note" id="accommodationNote"></p>
+                    </div>
+
+                    <div class="breakdown-item">
+                        <div class="item-header">
+                            <span class="item-label">Meals</span>
+                            <span class="item-amount" id="mealsCost">$0.00</span>
+                        </div>
+                        <p class="item-note" id="mealsNote"></p>
+                    </div>
+
+                    <div class="breakdown-item">
+                        <div class="item-header">
+                            <span class="item-label">Incidental Expenses</span>
+                            <span class="item-amount" id="incidentalsCost">$0.00</span>
+                        </div>
+                        <p class="item-note" id="incidentalsNote"></p>
+                    </div>
+                </div>
+
+                <div class="policy-references">
+                    <h3>Policy References</h3>
+                    <ul id="policyLinks">
+                        <li><a href="https://www.njc-cnm.gc.ca/directive/d10/en" target="_blank"
+                                rel="noopener noreferrer">NJC Travel Directive (Main)</a></li>
+                        <li><a href="https://www.njc-cnm.gc.ca/directive/travel-voyage/td-dv-a3-eng.php" target="_blank"
+                                rel="noopener noreferrer">Appendix C - Allowances (Canada &amp; USA)</a></li>
+                        <li><a href="https://www.njc-cnm.gc.ca/directive/app_d.php?lang=en" target="_blank"
+                                rel="noopener noreferrer">Appendix D - International Allowances</a></li>
+                        <li><a href="https://rehelv-acrd.tpsgc-pwgsc.gc.ca/lth-crl-eng.aspx" target="_blank"
+                                rel="noopener noreferrer">Accommodation Directory</a></li>
+                    </ul>
+                </div>
+
+                <div class="disclaimer" role="alert">
+                    <p><strong>Important Disclaimer:</strong></p>
+                    <p>This is an estimate only. Actual costs and allowances may vary. Always consult with your
+                        Designated Departmental Travel Coordinator and follow the official NJC Travel Directive for
+                        final approval and reimbursement details.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Voice Agent Overlay -->
+    <div id="voiceOverlay" class="voice-overlay" style="display: none;" role="dialog" aria-label="Voice assistant">
+        <div class="voice-overlay-content">
+            <p id="voiceStatus">Ready</p>
+            <p id="voiceTranscript" class="voice-transcript"></p>
+            <button type="button" id="voiceCancelBtn" class="btn-secondary">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Voice Agent Button -->
+    <button type="button" id="voiceAgentBtn" class="voice-agent-btn" aria-label="Activate voice assistant"
+        title="Voice Assistant">
+        <span aria-hidden="true">&#x1F3A4;</span>
+    </button>
+
+    <!-- GC Footer -->
+    <footer class="gc-footer" role="contentinfo">
+        <div class="gc-footer-main">
+            <div class="gc-footer-container">
+                <h3>Government of Canada</h3>
+                <ul class="gc-footer-links">
+                    <li><a href="https://www.canada.ca/en/contact.html" rel="noopener noreferrer">Contact
+                            information</a></li>
+                    <li><a href="https://www.canada.ca/en/government/dept.html" rel="noopener noreferrer">Departments
+                            and agencies</a></li>
+                    <li><a href="https://www.canada.ca/en/transparency/terms.html" rel="noopener noreferrer">Terms and
+                            conditions</a></li>
+                    <li><a href="https://www.canada.ca/en/transparency/privacy.html"
+                            rel="noopener noreferrer">Privacy</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="gc-footer-brand">
+            <div class="gc-footer-container">
+                <p class="gc-footer-modified">Based on NJC Travel Directive effective October 1, 2025</p>
+                <div class="gc-footer-wordmark">
+                    <span class="gc-footer-wordmark-text">Government of Canada / <span lang="fr">Gouvernement du
+                            Canada</span></span>
+                    <span class="gc-flag-footer" aria-hidden="true"></span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js?v=20260219-1400"></script>
+    <script src="mdxtp-export.js?v=20260219-1400"></script>
+    <script src="enhanced-features.js?v=20260219-1400"></script>
+    <script src="voiceAgent.js?v=20260219-1400"></script>
+</body>
+
+</html>

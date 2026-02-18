@@ -21,8 +21,8 @@ COPY . .
 RUN mkdir -p database && \
     node scripts/migrateCompleteTravelRates.js || echo "Migration will run on first request"
 
-# Expose port 5001
-EXPOSE 5001
+# Expose port 5000
+EXPOSE 5000
 
 # Start the server
 CMD ["node", "server.js"]

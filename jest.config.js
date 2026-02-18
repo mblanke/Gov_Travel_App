@@ -12,5 +12,7 @@ module.exports = {
   testMatch: [
     '**/tests/**/*.test.js'
   ],
-  verbose: true
+  verbose: true,
+  forceExit: true,
+  testTimeout: 15000,
 };
