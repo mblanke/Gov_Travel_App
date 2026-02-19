@@ -86,8 +86,17 @@ async function searchFlights(
       const durationMinutes = parseDuration(itinerary.duration);
       const durationHours = durationMinutes / 60;
 
-      // Determine if business class eligible (9+ hours)
-      const businessClassEligible = durationHours >= 9;
+      // Calculate per-segment (leg) durations and find the longest leg
+      let longestLegMinutes = 0;
+      const legs = segments.map((seg) => {
+        const segMinutes = seg.duration ? parseDuration(seg.duration) : 0;
+        if (segMinutes > longestLegMinutes) longestLegMinutes = segMinutes;
+        return { code: seg.departure.iataCode + "-" + seg.arrival.iataCode, minutes: segMinutes };
+      });
+      const longestLegHours = longestLegMinutes / 60;
+
+      // Business class eligible if any single leg is >= 9 hours (NJC Directive 3.3.11/3.4.11)
+      const businessClassEligible = longestLegHours >= 9;
 
       // Extract layover details from segments
       const layovers = [];
@@ -113,12 +122,14 @@ async function searchFlights(
         currency: offer.price.currency,
         duration: itinerary.duration,
         durationHours: durationHours.toFixed(1),
+        longestLegHours: parseFloat(longestLegHours.toFixed(1)),
         businessClassEligible: businessClassEligible,
         stops: segments.length - 1,
         carrier: segments[0].carrierCode,
         departureTime: segments[0].departure.at,
         arrivalTime: segments[segments.length - 1].arrival.at,
         layovers: layovers,
+        legs: legs,
       };
     });
 
@@ -176,6 +187,10 @@ function buildSampleFlights(
   departureDate,
   returnDate
 ) {
+  // Estimate realistic flight duration based on great-circle distance
+  const estimatedMinutes = estimateFlightMinutes(originCode, destinationCode);
+  const estimatedHours = estimatedMinutes / 60;
+
   return sampleFlightsData
     .map((flight, index) => {
       const layovers = generateSampleLayovers(
@@ -184,8 +199,26 @@ function buildSampleFlights(
         flight.stops,
         flight.carrier
       );
+
+      // Scale duration realistically: direct ≈ estimated, each stop adds 1.5-3h
+      const stopOverhead = flight.stops * (90 + Math.floor(Math.random() * 90));
+      const totalMinutes = estimatedMinutes + stopOverhead;
+      const totalHours = totalMinutes / 60;
+      const durationISO = minutesToISO(totalMinutes);
+
+      // Calculate longest leg: split flight time across legs
+      const numLegs = flight.stops + 1;
+      const longestLegHours = estimateLongestLeg(originCode, destinationCode, layovers, estimatedMinutes);
+
+      // Business class eligible if any single leg is >= 9 hours
+      const businessClassEligible = longestLegHours >= 9;
+
       return {
         ...flight,
+        duration: durationISO,
+        durationHours: parseFloat(totalHours.toFixed(1)),
+        longestLegHours: parseFloat(longestLegHours.toFixed(1)),
+        businessClassEligible,
         layovers,
         originCode,
         destinationCode,
@@ -418,6 +451,123 @@ function parseDuration(duration) {
   const hours = parseInt(matches[1] || 0);
   const minutes = parseInt(matches[2] || 0);
   return hours * 60 + minutes;
+}
+
+/**
+ * Convert minutes to ISO 8601 duration string
+ */
+function minutesToISO(totalMinutes) {
+  const hrs = Math.floor(totalMinutes / 60);
+  const mins = Math.round(totalMinutes % 60);
+  return `PT${hrs > 0 ? hrs + "H" : ""}${mins > 0 ? mins + "M" : ""}`;
+}
+
+/**
+ * Approximate airport coordinates (lat, lon) for great-circle distance.
+ * Returns null if the code is unknown.
+ */
+function getAirportCoords(code) {
+  const coords = {
+    // Canada
+    YOW: [45.32, -75.67], YYZ: [43.68, -79.63], YUL: [45.47, -73.74],
+    YVR: [49.19, -123.18], YYC: [51.11, -114.02], YEG: [53.31, -113.58],
+    YWG: [49.91, -97.24], YHZ: [44.88, -63.51], YYJ: [48.65, -123.43],
+    YQB: [46.79, -71.39], YQR: [50.43, -104.67], YXE: [52.17, -106.70],
+    YQT: [48.37, -89.32], YXY: [60.71, -135.07], YZF: [62.46, -114.44],
+    YFB: [63.76, -68.56], YHM: [43.17, -79.93],
+    // US
+    JFK: [40.64, -73.78], LAX: [33.94, -118.41], ORD: [41.97, -87.91],
+    MIA: [25.79, -80.29], SFO: [37.62, -122.38], SEA: [47.45, -122.31],
+    BOS: [42.36, -71.01], IAD: [38.94, -77.46], ATL: [33.64, -84.43],
+    DFW: [32.90, -97.04], DEN: [39.86, -104.67], PHX: [33.43, -112.01],
+    LAS: [36.08, -115.15], MCO: [28.43, -81.31], ANC: [61.17, -150.00],
+    // Europe
+    LHR: [51.47, -0.46], CDG: [49.01, 2.55], FRA: [50.03, 8.57],
+    AMS: [52.31, 4.77], FCO: [41.80, 12.25], MAD: [40.47, -3.57],
+    BCN: [41.30, 2.08], MXP: [45.63, 8.72], BER: [52.37, 13.52],
+    MUC: [48.35, 11.79], ZRH: [47.46, 8.55], VIE: [48.11, 16.57],
+    PRG: [50.10, 14.26], WAW: [52.17, 20.97], BUD: [47.44, 19.26],
+    ATH: [37.94, 23.94], LIS: [38.77, -9.13], DUB: [53.42, -6.27],
+    BRU: [50.90, 4.48], CPH: [55.62, 12.66], ARN: [59.65, 17.94],
+    HEL: [60.32, 24.96], OSL: [60.19, 11.10], TLL: [59.41, 24.83],
+    RIX: [56.92, 23.97], VNO: [54.63, 25.29], KEF: [63.99, -22.62],
+    GVA: [46.24, 6.11], OTP: [44.57, 26.08], SOF: [42.70, 23.41],
+    IST: [41.28, 28.75], SVO: [55.97, 37.41],
+    // Middle East
+    DXB: [25.25, 55.36], DOH: [25.26, 51.61], TLV: [32.01, 34.89],
+    AUH: [24.44, 54.65], AMM: [31.72, 35.99],
+    // Asia
+    NRT: [35.76, 140.39], HND: [35.55, 139.78], ICN: [37.46, 126.44],
+    PEK: [40.08, 116.58], PVG: [31.14, 121.81], HKG: [22.31, 113.91],
+    TPE: [25.08, 121.23], KIX: [34.43, 135.24], SIN: [1.36, 103.99],
+    BKK: [13.68, 100.75], KUL: [2.75, 101.71], DEL: [28.57, 77.10],
+    BOM: [19.09, 72.87], CGK: [-6.13, 106.66], MNL: [14.51, 121.02],
+    HAN: [21.22, 105.81], SGN: [10.82, 106.65],
+    // Oceania
+    SYD: [-33.95, 151.18], MEL: [-37.67, 144.84], AKL: [-37.01, 174.79],
+    BNE: [-27.38, 153.12], PER: [-31.94, 115.97], CBR: [-35.31, 149.19],
+    // Africa
+    JNB: [-26.14, 28.25], CAI: [30.12, 31.41], NBO: [-1.32, 36.93],
+    CPT: [-33.97, 18.60], ADD: [8.98, 38.80], CMN: [33.37, -7.59],
+    // South America
+    GRU: [-23.43, -46.47], EZE: [-34.82, -58.54], BOG: [4.70, -74.15],
+    SCL: [-33.39, -70.79], LIM: [-12.02, -77.11], GIG: [-22.81, -43.25],
+  };
+  return coords[code] || null;
+}
+
+/**
+ * Haversine great-circle distance in km between two [lat,lon] pairs.
+ */
+function haversineKm(a, b) {
+  const toRad = (d) => (d * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(b[0] - a[0]);
+  const dLon = toRad(b[1] - a[1]);
+  const sinLat = Math.sin(dLat / 2);
+  const sinLon = Math.sin(dLon / 2);
+  const h = sinLat * sinLat + Math.cos(toRad(a[0])) * Math.cos(toRad(b[0])) * sinLon * sinLon;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+/**
+ * Estimate flight time in minutes between two IATA codes.
+ * Uses great-circle distance with a realistic cruise speed (~850 km/h)
+ * plus 30 min for taxi/climb/descent.
+ */
+function estimateFlightMinutes(originCode, destCode) {
+  const a = getAirportCoords(originCode);
+  const b = getAirportCoords(destCode);
+  if (!a || !b) {
+    // Fallback: assume medium-haul 5 hours
+    return 300;
+  }
+  const km = haversineKm(a, b);
+  const cruiseSpeed = 850; // km/h
+  const overheadMinutes = 30; // taxi + climb + descent
+  return (km / cruiseSpeed) * 60 + overheadMinutes;
+}
+
+/**
+ * Estimate the longest single-leg flight time (in hours) for a route with layovers.
+ * Computes the distance for each leg and returns the longest.
+ */
+function estimateLongestLeg(originCode, destinationCode, layovers, totalFlightMinutes) {
+  if (!layovers || layovers.length === 0) {
+    // Direct flight — the whole thing is one leg
+    return totalFlightMinutes / 60;
+  }
+
+  // Build the chain of airports: origin → layover1 → layover2 → destination
+  const chain = [originCode, ...layovers.map((l) => l.airport), destinationCode];
+  let longestMinutes = 0;
+
+  for (let i = 0; i < chain.length - 1; i++) {
+    const legMinutes = estimateFlightMinutes(chain[i], chain[i + 1]);
+    if (legMinutes > longestMinutes) longestMinutes = legMinutes;
+  }
+
+  return longestMinutes / 60;
 }
 
 /**

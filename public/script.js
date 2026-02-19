@@ -547,10 +547,10 @@ function calculateCosts(params, customAllowances = null) {
     transportLabel = "Flight Cost";
     if (flightDuration >= BUSINESS_CLASS_THRESHOLD_HOURS) {
       transportCost = estimatedTransportCost * BUSINESS_CLASS_MULTIPLIER;
-      transportNote = `Business class applicable (flight ${flightDuration} hours ≥ 9 hours). Estimated at ${BUSINESS_CLASS_MULTIPLIER}x economy cost per NJC Directive Section 3.3.11/3.4.11`;
+      transportNote = `Business class applicable (longest leg ${flightDuration} hours ≥ 9 hours). Estimated at ${BUSINESS_CLASS_MULTIPLIER}x economy cost per NJC Directive Section 3.3.11/3.4.11`;
     } else {
       transportCost = estimatedTransportCost;
-      transportNote = `Economy class flight (${flightDuration} hours < 9 hours). Per NJC Directive Section 3.3.11/3.4.11`;
+      transportNote = `Economy class flight (longest leg ${flightDuration} hours < 9 hours). Per NJC Directive Section 3.3.11/3.4.11`;
     }
   } else if (transportMode === "vehicle") {
     transportLabel = "Personal Vehicle";
@@ -1277,9 +1277,10 @@ function displayFlightResults(flights) {
 
   flights.forEach((flight, index) => {
     const isBusinessClass = flight.businessClassEligible;
+    const longestLeg = flight.longestLegHours || flight.durationHours;
     const isCheapest = index === 0;
     const badge = isBusinessClass
-      ? '<span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);">⭐ Business Eligible</span>'
+      ? `<span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);">⭐ Business Eligible (longest leg ${longestLeg}h)</span>`
       : "";
     const cheapestBadge = isCheapest
       ? '<span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);">💰 Best Price</span>'
@@ -1344,6 +1345,7 @@ function displayFlightResults(flights) {
                   class="select-flight-btn"
                   data-price="${flight.price}" 
                   data-duration="${flight.durationHours}" 
+                  data-longest-leg="${flight.longestLegHours || flight.durationHours}"
                   data-business="${isBusinessClass}"
                   data-stops="${flight.stops}"
                   data-carrier="${flight.carrier || 'Various'}"
@@ -1376,6 +1378,7 @@ function displayFlightResults(flights) {
         e.stopPropagation();
         const price = parseFloat(this.dataset.price);
         const duration = parseFloat(this.dataset.duration);
+        const longestLeg = parseFloat(this.dataset.longestLeg) || duration;
         const business = this.dataset.business === "true";
         const stops = parseInt(this.dataset.stops) || 0;
         const carrier = this.dataset.carrier || "Various";
@@ -1385,24 +1388,26 @@ function displayFlightResults(flights) {
             layovers = JSON.parse(decodeURIComponent(this.dataset.layovers));
           }
         } catch (e) { layovers = []; }
-        selectFlight(price, duration, business, stops, carrier, layovers);
+        selectFlight(price, duration, business, stops, carrier, layovers, longestLeg);
       });
     });
   }, 0);
 }
 
 // Select a flight and populate form
-function selectFlight(price, durationHours, businessClassEligible, stops, carrier, layovers) {
+function selectFlight(price, durationHours, businessClassEligible, stops, carrier, layovers, longestLegHours) {
+  longestLegHours = longestLegHours || durationHours;
   console.log("selectFlight called with:", {
     price,
     durationHours,
+    longestLegHours,
     businessClassEligible,
     stops,
     carrier,
     layovers,
   });
-  // Set hidden form fields
-  document.getElementById("flightDuration").value = durationHours;
+  // Set hidden form fields — use longestLegHours for business class determination
+  document.getElementById("flightDuration").value = longestLegHours;
   document.getElementById("estimatedFlightCost").value = price;
 
   // Show selected flight info
@@ -1413,7 +1418,7 @@ function selectFlight(price, durationHours, businessClassEligible, stops, carrie
     2
   )} CAD | <strong>Duration:</strong> ${durationHours} hours | <strong>Carrier:</strong> ${carrier || "Various"}`;
   if (businessClassEligible) {
-    details += ` | <strong style="color: #ff9800;">⚠️ Business class eligible (≥9 hours)</strong>`;
+    details += ` | <strong style="color: #ff9800;">⚠️ Business class eligible (longest leg ${longestLegHours}h ≥ 9 hours)</strong>`;
   }
 
   // Add stop/layover summary

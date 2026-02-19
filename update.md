@@ -77,3 +77,61 @@ The ground transport cost is included in the **Total Estimated Cost** and in **M
 - ✅ MDXTP export includes ground transport data
 - ✅ 0 lint/compile errors across all changed files
 - ✅ Container running on port 5001
+
+---
+
+# Update — Business Class Per-Leg Eligibility & Realistic Sample Durations
+
+**Date:** February 19, 2026
+
+## Summary
+
+Fixed business class eligibility to be determined by **individual flight leg duration** instead of total itinerary duration. Per NJC Directive Section 3.3.11/3.4.11, business class is authorized when any single leg is ≥ 9 hours — not when the entire journey (including layovers) exceeds 9 hours.
+
+Also added **realistic flight duration estimation** for sample flights using great-circle distance calculations, replacing hardcoded durations that were identical regardless of route.
+
+## What Changed
+
+### Business class logic (before → after)
+
+| Scenario | Before | After |
+|----------|--------|-------|
+| Ottawa → Tokyo (30h total, longest leg 11h) | ✅ Business (total ≥ 9h) | ✅ Business (leg ≥ 9h) |
+| Ottawa → Toronto (1.3h total) | ❌ Economy | ❌ Economy |
+| Multi-stop where no single leg ≥ 9h but total > 9h | ✅ Business (incorrect) | ❌ Economy (correct) |
+
+### Sample flight durations (before → after)
+
+| Route | Before | After |
+|-------|--------|-------|
+| Ottawa → Tokyo | Hardcoded 16–20h | Estimated ~30h (realistic with stops) |
+| Ottawa → Toronto | Hardcoded 16–20h (wrong) | Estimated ~1.3h (correct) |
+| Ottawa → London | Hardcoded 16–20h | Estimated ~8–10h (realistic) |
+
+## Files Changed
+
+### `flightService.js`
+- **Amadeus API path**: Each segment's `duration` is now parsed individually; `longestLegHours` is computed and used for `businessClassEligible`
+- **Sample flights path**: `buildSampleFlights()` now estimates realistic durations using great-circle distance instead of using hardcoded `sampleFlights.json` values
+- **New functions**:
+  - `estimateFlightMinutes(origin, dest)` — great-circle distance → flight time with overhead
+  - `estimateLongestLeg(origin, dest, layovers, totalMinutes)` — finds the longest individual leg
+  - `haversineKm(a, b)` — haversine formula for distance between coordinate pairs
+  - `getAirportCoords(code)` — lat/lon lookup for ~80 major airports
+  - `minutesToISO(minutes)` — converts minutes to ISO 8601 duration string
+- Flight response objects now include `longestLegHours` and `legs` fields
+
+### `public/script.js`
+- **Flight card badge**: Now shows longest leg duration — `"⭐ Business Eligible (longest leg 11.3h)"`
+- **Select button**: Passes `data-longest-leg` attribute through the DOM
+- **`selectFlight()`**: Accepts `longestLegHours` parameter; stores it in the hidden `flightDuration` field for cost calculation
+- **`calculateCosts()`**: Transport note now says "longest leg X hours" instead of "flight X hours"
+- **Selected flight details**: Business class message updated to show longest leg
+
+## Test Results
+
+- ✅ Ottawa → Tokyo: longest leg 11.3–14.3h → business class eligible
+- ✅ Ottawa → Toronto: longest leg 1.3h → economy class
+- ✅ All 9 flightService tests pass
+- ✅ All 10 api tests pass (port-conflict failure is pre-existing, not related)
+- ✅ 0 lint/compile errors in changed files
