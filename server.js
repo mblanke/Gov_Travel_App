@@ -95,26 +95,8 @@ app.use(
   })
 );
 
-// Disable caching for HTML and JS files
-app.use((req, res, next) => {
-  if (req.path.endsWith(".html") || req.path.endsWith(".js")) {
-    res.set(
-      "Cache-Control",
-      "no-store, no-cache, must-revalidate, proxy-revalidate"
-    );
-    res.set("Pragma", "no-cache");
-    res.set("Expires", "0");
-  }
-  next();
-});
-
-// Serve data directory explicitly
-app.use("/data", express.static(path.join(__dirname, "data")));
-
-// Route for root
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
+// Root is served by express.static above (public/index.html); assets rely on
+// ETag revalidation (and maxAge in production) instead of no-store.
 
 // Route for validation page
 app.get("/validation", (req, res) => {
@@ -293,55 +275,86 @@ app.get("/api/accommodation/rate", async (req, res) => {
  * Full-text search
  * GET /api/search?q=australia
  */
-app.get("/api/search", async (req, res) => {
-  try {
-    const { q } = req.query;
-
-    if (!q) {
-      return res
-        .status(400)
-        .json({ error: "Missing search query (q parameter)" });
+/**
+ * Cache successful JSON responses of read-only DB endpoints (5 min TTL via
+ * the db cache in utils/cache.js). Rates only change on migration.
+ */
+function cacheDbResponse(keyFn) {
+  return (req, res, next) => {
+    const key = keyFn(req);
+    const cached = cache.getDbQuery(key, "");
+    if (cached) {
+      return res.json(cached);
     }
+    const originalJson = res.json.bind(res);
+    res.json = (body) => {
+      if (res.statusCode === 200) cache.setDbQuery(key, "", body);
+      return originalJson(body);
+    };
+    next();
+  };
+}
 
-    const results = await dbService.fullTextSearch(q);
-    res.json({
-      query: q,
-      results: results,
-      count: results.length,
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+app.get(
+  "/api/search",
+  cacheDbResponse((req) => `search:${req.query.q}`),
+  async (req, res) => {
+    try {
+      const { q } = req.query;
+
+      if (!q) {
+        return res
+          .status(400)
+          .json({ error: "Missing search query (q parameter)" });
+      }
+
+      const results = await dbService.fullTextSearch(q);
+      res.json({
+        query: q,
+        results: results,
+        count: results.length,
+      });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
-});
+);
 
 /**
  * Autocomplete endpoint
  * GET /api/autocomplete?q=can
  */
-app.get("/api/autocomplete", async (req, res) => {
-  try {
-    const { q } = req.query;
+app.get(
+  "/api/autocomplete",
+  cacheDbResponse((req) => `ac:${req.query.q}:${req.query.limit || ""}`),
+  async (req, res) => {
+    try {
+      const { q } = req.query;
 
-    if (!q || q.length < 2) {
-      return res.json({ suggestions: [] });
+      if (!q || q.length < 2) {
+        return res.json({ suggestions: [] });
+      }
+
+      const limit = Math.min(parseInt(req.query.limit, 10) || 10, 25);
+      const suggestions = await dbService.autocomplete(q, limit);
+      res.json({
+        query: q,
+        suggestions: suggestions,
+      });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
     }
-
-    const limit = Math.min(parseInt(req.query.limit, 10) || 10, 25);
-    const suggestions = await dbService.autocomplete(q, limit);
-    res.json({
-      query: q,
-      suggestions: suggestions,
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
   }
-});
+);
 
 /**
  * Get cities by region
  * GET /api/cities/region?region=Oceania
  */
-app.get("/api/cities/region", async (req, res) => {
+app.get(
+  "/api/cities/region",
+  cacheDbResponse((req) => `citiesRegion:${req.query.region}`),
+  async (req, res) => {
   try {
     const { region } = req.query;
 
@@ -358,13 +371,17 @@ app.get("/api/cities/region", async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-});
+  }
+);
 
 /**
  * Get cities by country
  * GET /api/cities/country?country=Australia
  */
-app.get("/api/cities/country", async (req, res) => {
+app.get(
+  "/api/cities/country",
+  cacheDbResponse((req) => `citiesCountry:${req.query.country}`),
+  async (req, res) => {
   try {
     const { country } = req.query;
 
@@ -381,42 +398,57 @@ app.get("/api/cities/country", async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-});
+  }
+);
 
 /**
  * List all regions
  * GET /api/regions
  */
-app.get("/api/regions", async (req, res) => {
-  try {
-    const regions = await dbService.getAllRegions();
-    res.json({ regions: regions });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+app.get(
+  "/api/regions",
+  cacheDbResponse(() => "regions"),
+  async (req, res) => {
+    try {
+      const regions = await dbService.getAllRegions();
+      res.json({ regions: regions });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
-});
+);
 
 /**
  * List all countries
  * GET /api/countries
  */
-app.get("/api/countries", async (req, res) => {
-  try {
-    const countries = await dbService.getAllCountries();
-    res.json({ countries: countries });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+app.get(
+  "/api/countries",
+  cacheDbResponse(() => "countries"),
+  async (req, res) => {
+    try {
+      const countries = await dbService.getAllCountries();
+      res.json({ countries: countries });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
-});
+);
 
-// Update health check to include database status
-app.get("/api/health", async (req, res) => {
-  let dbStatus = "inactive"; // eslint-disable-line no-useless-assignment
-  try {
-    const regions = await dbService.getAllRegions();
-    dbStatus = regions.length > 0 ? "active" : "empty";
-  } catch (_err) {
-    dbStatus = "error";
+// Health check with database status (cheap SELECT 1, cached for 30 s)
+let healthDbStatus = { value: null, checkedAt: 0 };
+app.get("/api/health", (req, res) => {
+  let dbStatus;
+  if (healthDbStatus.value && Date.now() - healthDbStatus.checkedAt < 30_000) {
+    dbStatus = healthDbStatus.value;
+  } else {
+    try {
+      dbService.db.prepare("SELECT 1").get();
+      dbStatus = "active";
+    } catch (_err) {
+      dbStatus = "error";
+    }
+    healthDbStatus = { value: dbStatus, checkedAt: Date.now() };
   }
 
   res.json({

@@ -382,11 +382,9 @@ function generateSampleLayovers(originCode, destinationCode, stops, carrier) {
 /**
  * Classify an IATA airport code into a geographic region.
  */
-function getAirportRegion(code) {
-  // Canadian airports start with Y
-  if (/^Y[A-Z]{2}$/.test(code)) return "canada";
-
-  const regionMap = {
+// Module-level lookup table — building this object per call caused needless
+// allocation/GC churn on every flight estimate
+const AIRPORT_REGIONS = {
     // US East
     JFK: "us-east", EWR: "us-east", LGA: "us-east", IAD: "us-east", DCA: "us-east",
     BOS: "us-east", ATL: "us-east", ORD: "us-east", MIA: "us-east", PHL: "us-east",
@@ -436,9 +434,12 @@ function getAirportRegion(code) {
     SJU: "south-america", NAS: "south-america",
     // Australia (alternate)
     CBR: "oceania",
-  };
+};
 
-  return regionMap[code] || "international";
+function getAirportRegion(code) {
+  // Canadian airports start with Y
+  if (/^Y[A-Z]{2}$/.test(code)) return "canada";
+  return AIRPORT_REGIONS[code] || "international";
 }
 
 /**
@@ -466,8 +467,7 @@ function minutesToISO(totalMinutes) {
  * Approximate airport coordinates (lat, lon) for great-circle distance.
  * Returns null if the code is unknown.
  */
-function getAirportCoords(code) {
-  const coords = {
+const AIRPORT_COORDS = {
     // Canada
     YOW: [45.32, -75.67], YYZ: [43.68, -79.63], YUL: [45.47, -73.74],
     YVR: [49.19, -123.18], YYC: [51.11, -114.02], YEG: [53.31, -113.58],
@@ -512,8 +512,10 @@ function getAirportCoords(code) {
     // South America
     GRU: [-23.43, -46.47], EZE: [-34.82, -58.54], BOG: [4.70, -74.15],
     SCL: [-33.39, -70.79], LIM: [-12.02, -77.11], GIG: [-22.81, -43.25],
-  };
-  return coords[code] || null;
+};
+
+function getAirportCoords(code) {
+  return AIRPORT_COORDS[code] || null;
 }
 
 /**
@@ -574,8 +576,7 @@ function estimateLongestLeg(originCode, destinationCode, layovers, totalFlightMi
  * Get IATA airport code from city name
  * This is a simplified version - in production, use a proper airport database
  */
-function getAirportCode(cityName) {
-  const airportCodes = {
+const CITY_AIRPORT_CODES = {
     // Canadian Cities
     ottawa: "YOW",
     toronto: "YYZ",
@@ -949,10 +950,11 @@ function getAirportCode(cityName) {
     baku: "GYD",
     bishkek: "FRU",
     dushanbe: "DYU",
-  };
+};
 
+function getAirportCode(cityName) {
   const normalized = cityName.toLowerCase().replace(/,.*$/, "").trim();
-  return airportCodes[normalized] || null;
+  return CITY_AIRPORT_CODES[normalized] || null;
 }
 
 module.exports = {

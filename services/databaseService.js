@@ -13,14 +13,20 @@ class DatabaseService {
   constructor() {
     this.dbPath = path.join(__dirname, "..", "database", "travel_rates.db");
     this.db = null;
+    this.stmts = new Map();
   }
 
   /**
-   * Connect to database (synchronous with better-sqlite3)
+   * Connect to database (synchronous with better-sqlite3).
+   * The service only reads; scripts/migrate.js is the sole writer.
    */
   connect() {
     try {
-      this.db = new Database(this.dbPath, { readonly: false });
+      this.db = new Database(this.dbPath, {
+        readonly: true,
+        fileMustExist: true,
+      });
+      this.stmts.clear();
       console.log("✅ Database connected");
       return Promise.resolve();
     } catch (err) {
@@ -30,11 +36,24 @@ class DatabaseService {
   }
 
   /**
+   * Prepare-once statement cache. better-sqlite3 does not cache prepared
+   * statements itself; without this every call recompiles the SQL.
+   */
+  stmt(key, sql) {
+    let prepared = this.stmts.get(key);
+    if (!prepared) {
+      prepared = this.db.prepare(sql);
+      this.stmts.set(key, prepared);
+    }
+    return prepared;
+  }
+
+  /**
    * Search for cities by name, country, or province
    * Returns accommodation limits with associated meal rates
    */
   searchCity(searchTerm) {
-    const term = `%${searchTerm}%`;
+    const term = `%${searchTerm.toLowerCase()}%`;
     const exactTerm = searchTerm.toLowerCase();
     const likeTerm = `${searchTerm.toLowerCase()}%`;
 
@@ -60,23 +79,22 @@ class DatabaseService {
                 (i.region_code = a.region_code AND i.city_key IS NULL)
                 OR i.city_key = a.city_key
             ) AND i.accommodation_type = 'commercial' AND i.duration_tier = 'day_1_30'
-            WHERE LOWER(a.city_name) LIKE LOWER(?) 
-               OR LOWER(a.city_key) LIKE LOWER(?)
-               OR LOWER(a.country) LIKE LOWER(?)
-               OR LOWER(a.province_state) LIKE LOWER(?)
-            ORDER BY 
-                CASE 
-                    WHEN LOWER(a.city_name) = ? THEN 1
-                    WHEN LOWER(a.city_key) = ? THEN 2
-                    WHEN LOWER(a.city_name) LIKE ? THEN 3
+            WHERE a.city_name_lower LIKE ?
+               OR a.city_key LIKE ?
+               OR LOWER(a.country) LIKE ?
+               OR LOWER(a.province_state) LIKE ?
+            ORDER BY
+                CASE
+                    WHEN a.city_name_lower = ? THEN 1
+                    WHEN a.city_key = ? THEN 2
+                    WHEN a.city_name_lower LIKE ? THEN 3
                     ELSE 4
                 END
             LIMIT 10
         `;
 
     try {
-      const rows = this.db
-        .prepare(query)
+      const rows = this.stmt("searchCity", query)
         .all(term, term, term, term, exactTerm, exactTerm, likeTerm);
       return Promise.resolve(rows.map((row) => this.formatTravelRate(row)));
     } catch (err) {
@@ -121,8 +139,7 @@ class DatabaseService {
         `;
 
     try {
-      const row = this.db
-        .prepare(query)
+      const row = this.stmt("getAccommodationRate", query)
         .get(
           accommodationType,
           durationTier,
@@ -179,7 +196,7 @@ class DatabaseService {
         `;
 
     try {
-      const rows = this.db.prepare(query).all(searchTerm, searchTerm);
+      const rows = this.stmt("fullTextSearch", query).all(searchTerm, searchTerm);
       return Promise.resolve(rows.map((row) => this.formatTravelRate(row)));
     } catch (err) {
       // Fallback to LIKE search if FTS fails
@@ -193,7 +210,7 @@ class DatabaseService {
   getAllRegions() {
     const query = `SELECT code, name, default_currency FROM regions ORDER BY name`;
     try {
-      const rows = this.db.prepare(query).all();
+      const rows = this.stmt("getAllRegions", query).all();
       return Promise.resolve(rows);
     } catch (err) {
       return Promise.reject(err);
@@ -206,7 +223,7 @@ class DatabaseService {
   getAllCountries() {
     const query = `SELECT DISTINCT country FROM accommodation_limits ORDER BY country`;
     try {
-      const rows = this.db.prepare(query).all();
+      const rows = this.stmt("getAllCountries", query).all();
       return Promise.resolve(rows.map((r) => r.country));
     } catch (err) {
       return Promise.reject(err);
@@ -238,7 +255,7 @@ class DatabaseService {
         `;
 
     try {
-      const rows = this.db.prepare(query).all(regionCode);
+      const rows = this.stmt("getCitiesByRegion", query).all(regionCode);
       return Promise.resolve(rows.map((row) => this.formatTravelRate(row)));
     } catch (err) {
       return Promise.reject(err);
@@ -273,7 +290,7 @@ class DatabaseService {
         `;
 
     try {
-      const rows = this.db.prepare(query).all(country);
+      const rows = this.stmt("getCitiesByCountry", query).all(country);
       return Promise.resolve(rows.map((row) => this.formatTravelRate(row)));
     } catch (err) {
       return Promise.reject(err);
@@ -284,23 +301,23 @@ class DatabaseService {
    * Autocomplete search
    */
   autocomplete(prefix, limit = 10) {
-    const term = `${prefix}%`;
+    // Prefix match on the precomputed lowercase column so the index is used
+    const term = `${prefix.toLowerCase()}%`;
 
     const query = `
             SELECT city_name, city_key, country, region_code, province_state
             FROM accommodation_limits
-            WHERE LOWER(city_name) LIKE LOWER(?)
-               OR LOWER(city_key) LIKE LOWER(?)
-            ORDER BY 
-                CASE WHEN LOWER(city_name) LIKE LOWER(?) THEN 1 ELSE 2 END,
+            WHERE city_name_lower LIKE ?
+               OR city_key LIKE ?
+            ORDER BY
+                CASE WHEN city_name_lower LIKE ? THEN 1 ELSE 2 END,
                 city_name
             LIMIT ?
         `;
 
     try {
-      const rows = this.db
-        .prepare(query)
-        .all(term, term, prefix.toLowerCase() + "%", limit);
+      const rows = this.stmt("autocomplete", query)
+        .all(term, term, term, limit);
       return Promise.resolve(rows);
     } catch (err) {
       return Promise.reject(err);
@@ -317,7 +334,7 @@ class DatabaseService {
         `;
 
     try {
-      const row = this.db.prepare(query).get(provinceCode, `%${provinceCode}%`);
+      const row = this.stmt("getKilometricRate", query).get(provinceCode, `%${provinceCode}%`);
       return Promise.resolve(row);
     } catch (err) {
       return Promise.reject(err);
@@ -330,7 +347,7 @@ class DatabaseService {
   getAllKilometricRates() {
     const query = `SELECT * FROM kilometric_rates ORDER BY province_territory`;
     try {
-      const rows = this.db.prepare(query).all();
+      const rows = this.stmt("getAllKilometricRates", query).all();
       return Promise.resolve(rows);
     } catch (err) {
       return Promise.reject(err);
@@ -349,7 +366,7 @@ class DatabaseService {
         `;
 
     try {
-      const row = this.db.prepare(query).get(regionCode, tier);
+      const row = this.stmt("getPrivateAccommodationRate", query).get(regionCode, tier);
       return Promise.resolve(row);
     } catch (err) {
       return Promise.reject(err);
@@ -376,11 +393,9 @@ class DatabaseService {
 
     try {
       const row = cityKey
-        ? this.db
-            .prepare(query)
+        ? this.stmt("getMealRatesCity", query)
             .get(regionCode, cityKey, accommodationType, durationTier)
-        : this.db
-            .prepare(query)
+        : this.stmt("getMealRatesRegion", query)
             .get(regionCode, accommodationType, durationTier);
       return Promise.resolve(row);
     } catch (err) {
@@ -398,7 +413,7 @@ class DatabaseService {
         `;
 
     try {
-      const row = this.db.prepare(query).get(regionCode, weekendLength);
+      const row = this.stmt("getWeekendAllowance", query).get(regionCode, weekendLength);
       return Promise.resolve(row);
     } catch (err) {
       return Promise.reject(err);
@@ -494,22 +509,26 @@ class DatabaseService {
   getStats() {
     try {
       const stats = {
-        accommodations: this.db
-          .prepare("SELECT COUNT(*) as count FROM accommodation_limits")
-          .get().count,
-        mealRates: this.db
-          .prepare("SELECT COUNT(*) as count FROM meal_rates")
-          .get().count,
-        incidentalRates: this.db
-          .prepare("SELECT COUNT(*) as count FROM incidental_rates")
-          .get().count,
-        regions: this.db.prepare("SELECT COUNT(*) as count FROM regions").get()
-          .count,
-        countries: this.db
-          .prepare(
-            "SELECT COUNT(DISTINCT country) as count FROM accommodation_limits"
-          )
-          .get().count,
+        accommodations: this.stmt(
+          "statsAccommodations",
+          "SELECT COUNT(*) as count FROM accommodation_limits"
+        ).get().count,
+        mealRates: this.stmt(
+          "statsMealRates",
+          "SELECT COUNT(*) as count FROM meal_rates"
+        ).get().count,
+        incidentalRates: this.stmt(
+          "statsIncidentalRates",
+          "SELECT COUNT(*) as count FROM incidental_rates"
+        ).get().count,
+        regions: this.stmt(
+          "statsRegions",
+          "SELECT COUNT(*) as count FROM regions"
+        ).get().count,
+        countries: this.stmt(
+          "statsCountries",
+          "SELECT COUNT(DISTINCT country) as count FROM accommodation_limits"
+        ).get().count,
       };
       return Promise.resolve(stats);
     } catch (err) {
