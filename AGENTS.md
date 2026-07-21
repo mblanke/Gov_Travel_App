@@ -65,9 +65,9 @@ Model: Auto (override to the strongest available for high-stakes diffs).
 - Cite sources when generating documents from a knowledge base.
 
 ## Repo facts
-- Primary stack: Node.js 18 / Express 4.18 / SQLite (better-sqlite3) / Vanilla JS frontend
+- Primary stack: Node.js 20 / Express 4.18 / SQLite (better-sqlite3) / Vanilla JS frontend
 - Package manager: npm
 - Test command: `npm test`
 - Lint/format command: `npm run lint`
 - Build command: none (no build step)
-- Deployment: Docker (node:18-slim) via docker-compose
+- Deployment: Docker (node:20-slim) via docker-compose

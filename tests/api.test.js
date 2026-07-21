@@ -56,6 +56,27 @@ describe("Accommodation API", () => {
       .query({ city: "Ottawa" });
     expect(res.status).toBe(200);
   });
+
+  test("GET /api/accommodation/search returns current NJC rates for Ottawa", async () => {
+    const res = await request(app)
+      .get("/api/accommodation/search")
+      .query({ city: "Ottawa" });
+    expect(res.status).toBe(200);
+    const ottawa = res.body.results[0];
+    expect(ottawa.name).toMatch(/Ottawa/);
+    // Appendix C effective 2026-04-01
+    expect(ottawa.meals.total).toBeCloseTo(121.25);
+    expect(ottawa.incidentals).toBeCloseTo(25.0);
+    expect(ottawa.accommodation.monthly).toHaveLength(12);
+  });
+
+  test("GET /api/accommodation/search finds Appendix D countries", async () => {
+    const res = await request(app)
+      .get("/api/cities/country")
+      .query({ country: "Japan" });
+    expect(res.status).toBe(200);
+    expect(res.body.cities.length).toBeGreaterThan(0);
+  });
 });
 
 describe("City Search APIs", () => {
@@ -66,6 +87,7 @@ describe("City Search APIs", () => {
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("suggestions");
     expect(Array.isArray(res.body.suggestions)).toBe(true);
+    expect(res.body.suggestions.map((s) => s.city_name)).toContain("Ottawa, ON");
   });
 
   test("GET /api/regions returns region list", async () => {
