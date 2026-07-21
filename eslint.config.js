@@ -57,9 +57,8 @@ module.exports = [
       "extract_cities.js",
       "extract_cities2.js",
       "extract_canadian.js",
-      // Migration scripts (one-time use, not production code)
-      "scripts/migrate*.js",
-      "scripts/rebuildDataStrict.js",
+      // One-off inspection scripts (not production code). scripts/migrate.js
+      // IS production tooling and is linted.
       "scripts/check*.js",
       "scripts/listCountries.js",
       "scripts/testCanberraAPI.js",

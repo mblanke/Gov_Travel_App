@@ -54,6 +54,7 @@ CREATE TABLE accommodation_limits (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     city_key TEXT UNIQUE NOT NULL,         -- Lowercase normalized key (e.g., 'ottawa', 'riga')
     city_name TEXT NOT NULL,               -- Display name (e.g., 'Ottawa, ON')
+    city_name_lower TEXT NOT NULL,         -- Precomputed LOWER(city_name) so prefix LIKE uses the index
     province_state TEXT,                   -- Province/State/Region
     country TEXT NOT NULL,
     region_code TEXT NOT NULL,             -- FK to regions.code
@@ -230,6 +231,7 @@ END;
 -- INDEXES for fast lookups
 -- =============================================================================
 CREATE INDEX idx_accommodation_country ON accommodation_limits(country);
+CREATE INDEX idx_accommodation_name_lower ON accommodation_limits(city_name_lower);
 CREATE INDEX idx_accommodation_region ON accommodation_limits(region_code);
 CREATE INDEX idx_accommodation_province ON accommodation_limits(province_state);
 CREATE INDEX idx_meal_region ON meal_rates(region_code);
