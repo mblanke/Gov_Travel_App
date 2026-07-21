@@ -21,23 +21,19 @@ const BUSINESS_CLASS_THRESHOLD_HOURS = 9;
 // Load databases
 async function loadDatabases() {
   try {
-    const [perDiemResponse, accommodationResponse, transportationResponse] =
-      await Promise.all([
-        fetch("data/perDiemRates.json"),
-        fetch("data/accommodationRates.json"),
-        fetch("data/transportationRates.json"),
-      ]);
+    // City/accommodation lookups go through the server API; only the two small
+    // rate files are shipped to the browser. accommodationRates.json (~large)
+    // is lazily fetched as a fallback only if the API is unavailable.
+    const [perDiemResponse, transportationResponse] = await Promise.all([
+      fetch("data/perDiemRates.json"),
+      fetch("data/transportationRates.json"),
+    ]);
 
-    if (
-      !perDiemResponse.ok ||
-      !accommodationResponse.ok ||
-      !transportationResponse.ok
-    ) {
+    if (!perDiemResponse.ok || !transportationResponse.ok) {
       throw new Error("Failed to load rate databases");
     }
 
     perDiemRatesDB = await perDiemResponse.json();
-    accommodationRatesDB = await accommodationResponse.json();
     transportationRatesDB = await transportationResponse.json();
 
     // Update metadata display if databases loaded successfully
@@ -285,8 +281,77 @@ function getAllowancesForRegion(destinationType) {
   };
 }
 
-// Helper function to get accommodation rate suggestion
-function getAccommodationSuggestion(destinationCity, destinationType) {
+// ---------------------------------------------------------------------------
+// Server API access with lazy JSON fallback
+// ---------------------------------------------------------------------------
+
+function debounce(fn, delayMs) {
+  let timer = null;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delayMs);
+  };
+}
+
+async function apiGet(url) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`API ${response.status} for ${url}`);
+  return response.json();
+}
+
+// Lazily fetch the full accommodation JSON only when the API is unreachable
+async function loadAccommodationFallback() {
+  if (accommodationRatesDB) return accommodationRatesDB;
+  console.warn("API unavailable — falling back to bundled rate JSON");
+  const response = await fetch("data/accommodationRates.json");
+  if (!response.ok) throw new Error("Fallback rate JSON unavailable");
+  accommodationRatesDB = await response.json();
+  loadCitiesFromJSON();
+  return accommodationRatesDB;
+}
+
+// Map an /api/accommodation response row to the legacy JSON entry shape the
+// calculation code was written against.
+function adaptApiRate(row) {
+  if (!row) return null;
+  return {
+    name: row.name,
+    province: row.province,
+    country: row.country,
+    region: row.region, // region code: canada/yukon/nwt/nunavut/usa/alaska/international
+    currency: row.accommodation_currency,
+    monthlyRates: row.accommodation ? row.accommodation.monthly : null,
+    standardRate: row.accommodation ? row.accommodation.standard : null,
+    meals: row.meals,
+    mealsCurrency: row.currency,
+    incidentals: row.incidentals,
+  };
+}
+
+// Helper function to get accommodation rate suggestion (API-first)
+async function getAccommodationSuggestion(destinationCity) {
+  try {
+    const data = await apiGet(
+      `/api/accommodation/search?city=${encodeURIComponent(destinationCity)}`
+    );
+    const results = data.results || [];
+    return adaptApiRate(results[0]);
+  } catch (error) {
+    if (!String(error.message).includes("API 404")) {
+      // API down (not just an unknown city): use the bundled JSON
+      try {
+        await loadAccommodationFallback();
+        return getAccommodationSuggestionLocal(destinationCity);
+      } catch (fallbackError) {
+        console.error("Rate lookup failed:", fallbackError);
+      }
+    }
+    return null;
+  }
+}
+
+// Legacy client-side lookup, kept as the offline/API-down fallback path
+function getAccommodationSuggestionLocal(destinationCity) {
   if (!accommodationRatesDB) return null;
 
   // Normalize city name to match database key format
@@ -294,36 +359,22 @@ function getAccommodationSuggestion(destinationCity, destinationType) {
     return city
       .toLowerCase()
       .replace(/,.*$/, "") // Remove everything after comma
-      .replace(/[^a-z\s]/g, "") // Remove special characters
+      .replace(/[^a-z0-9\s]/g, "") // Remove special characters
       .trim()
       .replace(/\s+/g, ""); // Remove spaces
   };
 
   const cityKey = normalizeCity(destinationCity);
 
-  // Check standard cities
   if (accommodationRatesDB.cities && accommodationRatesDB.cities[cityKey]) {
     return accommodationRatesDB.cities[cityKey];
   }
 
-  // Check international cities
   if (
     accommodationRatesDB.internationalCities &&
     accommodationRatesDB.internationalCities[cityKey]
   ) {
     return accommodationRatesDB.internationalCities[cityKey];
-  }
-
-  // Return default for region
-  if (
-    accommodationRatesDB.defaults &&
-    accommodationRatesDB.defaults[destinationType]
-  ) {
-    return {
-      name: destinationCity,
-      ...accommodationRatesDB.defaults[destinationType],
-      isDefault: true,
-    };
   }
 
   return null;
@@ -423,9 +474,9 @@ async function handleFormSubmit(e) {
     return;
   }
 
-  // Auto-lookup accommodation rate from local JSON data
+  // Auto-lookup accommodation rate via the server API (JSON fallback inside)
   let destinationRegion = destinationType; // Start with user-selected type
-  const rateData = getAccommodationSuggestion(destinationCity, destinationType);
+  const rateData = await getAccommodationSuggestion(destinationCity);
 
   if (!accommodationPerNight && !privateAccommodation) {
     if (rateData) {
@@ -446,7 +497,7 @@ async function handleFormSubmit(e) {
           lunch: rateData.meals.lunch,
           dinner: rateData.meals.dinner,
           incidental: rateData.incidentals,
-          currency: rateData.currency,
+          currency: rateData.mealsCurrency || rateData.currency,
           accommodationCurrency: rateData.currency || (rateData.country === "Canada" ? "CAD" : "USD"),
           privateAccommodation: 50.0,
         };
@@ -469,7 +520,7 @@ async function handleFormSubmit(e) {
         lunch: rateData.meals.lunch,
         dinner: rateData.meals.dinner,
         incidental: rateData.incidentals,
-        currency: rateData.currency,
+        currency: rateData.mealsCurrency || rateData.currency,
         accommodationCurrency: rateData.currency || (rateData.country === "Canada" ? "CAD" : "USD"),
         privateAccommodation: 50.0,
       };
@@ -739,7 +790,7 @@ function handleFormReset() {
 }
 
 // Validate city exists in database
-function validateCity(inputId) {
+async function validateCity(inputId) {
   const input = document.getElementById(inputId);
   const statusId =
     inputId === "departureCity"
@@ -754,22 +805,38 @@ function validateCity(inputId) {
     return;
   }
 
-  // Validate against local ALL_CITIES (loaded from JSON)
   // Normalize: lowercase, collapse whitespace, remove extra spaces around commas
   const normalize = (s) => s.toLowerCase().replace(/\s*,\s*/g, ", ").replace(/\s+/g, " ").trim();
   const normalCity = normalize(city);
 
+  let candidates;
+  try {
+    // Validate against the server API (searches display name and key)
+    const data = await apiGet(
+      `/api/autocomplete?q=${encodeURIComponent(city.split(",")[0].trim())}&limit=25`
+    );
+    candidates = (data.suggestions || []).map((s) => s.city_name);
+  } catch {
+    // API down: validate against the bundled JSON city list
+    try {
+      await loadAccommodationFallback();
+    } catch {
+      /* ALL_CITIES stays as-is */
+    }
+    candidates = ALL_CITIES;
+  }
+
   // Exact match on full name (e.g., "Ottawa, ON")
-  let match = ALL_CITIES.find((c) => normalize(c) === normalCity);
+  let match = candidates.find((c) => normalize(c) === normalCity);
 
   // Partial match: user typed just the city name (e.g., "Ottawa")
   if (!match) {
-    match = ALL_CITIES.find((c) => normalize(c).startsWith(normalCity + ","));
+    match = candidates.find((c) => normalize(c).startsWith(normalCity + ","));
   }
 
   // Loose match: city name contains the input
   if (!match) {
-    match = ALL_CITIES.find((c) => normalize(c).includes(normalCity));
+    match = candidates.find((c) => normalize(c).includes(normalCity));
   }
 
   if (match) {
@@ -791,8 +858,8 @@ function validateCity(inputId) {
   }
 }
 
-// Simplified city suggestions function - called directly from HTML oninput
-function showCitySuggestions(query, suggestionsId, inputId) {
+// City suggestions: server autocomplete with bundled-JSON fallback
+async function showCitySuggestions(query, suggestionsId, inputId) {
   const suggestionsDiv = document.getElementById(suggestionsId);
   if (!suggestionsDiv) {
     return;
@@ -804,11 +871,23 @@ function showCitySuggestions(query, suggestionsId, inputId) {
     return;
   }
 
-  // Filter from local ALL_CITIES array
-  const lowerQuery = query.toLowerCase();
-  const matches = ALL_CITIES.filter((city) =>
-    city.toLowerCase().includes(lowerQuery)
-  ).slice(0, MAX_CITY_SUGGESTIONS);
+  let matches;
+  try {
+    const data = await apiGet(
+      `/api/autocomplete?q=${encodeURIComponent(query)}&limit=${MAX_CITY_SUGGESTIONS}`
+    );
+    matches = (data.suggestions || []).map((s) => s.city_name);
+  } catch {
+    try {
+      await loadAccommodationFallback();
+    } catch {
+      /* ALL_CITIES stays as-is */
+    }
+    const lowerQuery = query.toLowerCase();
+    matches = ALL_CITIES.filter((city) =>
+      city.toLowerCase().includes(lowerQuery)
+    ).slice(0, MAX_CITY_SUGGESTIONS);
+  }
 
   if (matches.length === 0) {
     suggestionsDiv.innerHTML =
@@ -926,10 +1005,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("returnDate").setAttribute("min", departureDate);
   });
 
-  // Handle destination input
+  // Handle destination input (debounced — triggers an API rate lookup)
   document
     .getElementById("destinationCity")
-    .addEventListener("input", handleDestinationInput);
+    .addEventListener("input", debounce(handleDestinationInput, 350));
 
   document
     .getElementById("destinationType")
@@ -950,13 +1029,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     .getElementById("searchFlightsBtn")
     .addEventListener("click", handleFlightSearch);
 
-  // Handle departure/destination for Google Flights link
+  // Handle departure/destination for Google Flights link (debounced)
+  const debouncedFlightsLink = debounce(updateGoogleFlightsLink, 300);
   document
     .getElementById("departureCity")
-    .addEventListener("input", updateGoogleFlightsLink);
+    .addEventListener("input", debouncedFlightsLink);
   document
     .getElementById("destinationCity")
-    .addEventListener("input", updateGoogleFlightsLink);
+    .addEventListener("input", debouncedFlightsLink);
   document
     .getElementById("departureDate")
     .addEventListener("change", updateGoogleFlightsLink);
@@ -964,19 +1044,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     .getElementById("returnDate")
     .addEventListener("change", updateGoogleFlightsLink);
 
-  // Load city data for autocomplete from already-loaded JSON
-  loadCitiesFromJSON();
-
-  // Attach city suggestion listeners (cannot use inline oninput due to CSP)
+  // Attach city suggestion listeners, debounced so a fast typist triggers one
+  // API call per pause instead of one per keystroke
+  const debouncedSuggest = debounce(showCitySuggestions, 250);
   document
     .getElementById("departureCity")
     .addEventListener("input", function () {
-      showCitySuggestions(this.value, "departureCitySuggestions", "departureCity");
+      debouncedSuggest(this.value, "departureCitySuggestions", "departureCity");
     });
   document
     .getElementById("destinationCity")
     .addEventListener("input", function () {
-      showCitySuggestions(this.value, "destinationCitySuggestions", "destinationCity");
+      debouncedSuggest(this.value, "destinationCitySuggestions", "destinationCity");
     });
 
   // City validation listeners moved outside DOMContentLoaded to avoid timing issues
@@ -1007,7 +1086,7 @@ function formatCurrency(amount) {
 }
 
 // Handle destination city input for suggestions
-function handleDestinationInput() {
+async function handleDestinationInput() {
   const destinationCity = document.getElementById("destinationCity").value;
   const destinationType = document.getElementById("destinationType").value;
 
@@ -1024,8 +1103,8 @@ function handleDestinationInput() {
   );
   const suggestionText = document.getElementById("accommodationSuggestion");
 
-  // Look up from local JSON data
-  const rateData = getAccommodationSuggestion(destinationCity, destinationType);
+  // Look up via the server API (JSON fallback inside)
+  const rateData = await getAccommodationSuggestion(destinationCity);
 
   if (rateData) {
     // Get rate - use standardRate for international, first monthly rate for Canadian cities

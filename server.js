@@ -326,7 +326,8 @@ app.get("/api/autocomplete", async (req, res) => {
       return res.json({ suggestions: [] });
     }
 
-    const suggestions = await dbService.autocomplete(q);
+    const limit = Math.min(parseInt(req.query.limit, 10) || 10, 25);
+    const suggestions = await dbService.autocomplete(q, limit);
     res.json({
       query: q,
       suggestions: suggestions,
