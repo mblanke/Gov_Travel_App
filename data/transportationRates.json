@@ -1,34 +1,29 @@
 {
   "metadata": {
-    "effectiveDate": "2025-10-01",
-    "version": "1.0",
-    "source": "NJC Travel Directive Appendix B",
-    "lastUpdated": "2025-10-30",
-    "notes": "Kilometric rates for personal vehicle use. All rates in Canadian Dollars (CAD)."
+    "effectiveDate": "2026-07-01",
+    "version": "2.0",
+    "source": "NJC Travel Directive Appendix B (effective July 1, 2026)",
+    "lastUpdated": "2026-07-20",
+    "notes": "Kilometric rates for personal vehicle use, in Canadian Dollars (CAD) per km. NJC publishes one rate per province/territory of vehicle registration — there is no national flat rate and no distance tiering."
   },
   "kilometricRates": {
-    "description": "Rates per kilometre for use of personal vehicle on government business",
-    "modules": {
-      "module1and2": {
-        "name": "Modules 1 and 2 - Local and day travel",
-        "rates": {
-          "perKm": 0.68,
-          "notes": "For travel within headquarters area or day trips"
-        }
-      },
-      "module3": {
-        "name": "Module 3 - Travel in Canada and Continental USA with overnight stay",
-        "rates": {
-          "tier1": {
-            "description": "First 5,000 km per year",
-            "perKm": 0.68
-          },
-          "tier2": {
-            "description": "Over 5,000 km per year",
-            "perKm": 0.58
-          }
-        }
-      }
+    "description": "Rate per kilometre for use of a private motor vehicle on authorized government business travel",
+    "rule": "When travel spans multiple provinces or the USA, the rate of the province/territory of vehicle registration applies (NJC Appendix B).",
+    "defaultProvince": "ON",
+    "provinces": {
+      "AB": { "name": "Alberta", "ratePerKm": 0.590 },
+      "BC": { "name": "British Columbia", "ratePerKm": 0.630 },
+      "MB": { "name": "Manitoba", "ratePerKm": 0.585 },
+      "NB": { "name": "New Brunswick", "ratePerKm": 0.630 },
+      "NL": { "name": "Newfoundland and Labrador", "ratePerKm": 0.645 },
+      "NT": { "name": "Northwest Territories", "ratePerKm": 0.725 },
+      "NS": { "name": "Nova Scotia", "ratePerKm": 0.630 },
+      "NU": { "name": "Nunavut", "ratePerKm": 0.700 },
+      "ON": { "name": "Ontario", "ratePerKm": 0.655 },
+      "PE": { "name": "Prince Edward Island", "ratePerKm": 0.620 },
+      "QC": { "name": "Quebec", "ratePerKm": 0.645 },
+      "SK": { "name": "Saskatchewan", "ratePerKm": 0.580 },
+      "YT": { "name": "Yukon", "ratePerKm": 0.730 }
     },
     "additionalExpenses": {
       "parking": {
@@ -102,37 +97,6 @@
       }
     }
   },
-  "comparativeAnalysis": {
-    "description": "When choosing transportation mode, consider:",
-    "factors": [
-      "Total cost (transportation + time)",
-      "Travel duration",
-      "Accommodation needs",
-      "Meal allowances during travel",
-      "Work productivity during travel",
-      "Environmental impact"
-    ],
-    "costComparison": {
-      "ottawaToToronto": {
-        "flight": {
-          "cost": 250,
-          "duration": "1 hour flight + 2 hours airport",
-          "notes": "Fastest option"
-        },
-        "train": {
-          "cost": 85,
-          "duration": "4-5 hours",
-          "notes": "Can work during travel"
-        },
-        "vehicle": {
-          "cost": 306,
-          "calculation": "450 km × $0.68/km",
-          "duration": "4.5-5 hours",
-          "notes": "Plus parking, tolls"
-        }
-      }
-    }
-  },
   "vehicleInsurance": {
     "description": "Insurance coverage for personal vehicles on government business",
     "coverage": {
@@ -144,37 +108,6 @@
       "minimumInsurance": "Must maintain minimum provincial/territorial insurance",
       "proof": "May be required to provide proof of insurance",
       "condition": "Vehicle must be in safe operating condition"
-    }
-  },
-  "calculationExamples": {
-    "example1": {
-      "scenario": "Day trip Ottawa to Kingston (180 km each way)",
-      "calculation": {
-        "totalDistance": 360,
-        "rate": 0.68,
-        "totalCost": 244.80,
-        "formula": "360 km × $0.68/km = $244.80"
-      }
-    },
-    "example2": {
-      "scenario": "Multi-day trip with 2,000 km total",
-      "calculation": {
-        "totalDistance": 2000,
-        "rate": 0.68,
-        "totalCost": 1360.00,
-        "formula": "2,000 km × $0.68/km = $1,360.00",
-        "notes": "All at tier 1 rate (under 5,000 km/year)"
-      }
-    },
-    "example3": {
-      "scenario": "Trip after already driving 5,500 km this year, new trip is 1,000 km",
-      "calculation": {
-        "totalDistance": 1000,
-        "rate": 0.58,
-        "totalCost": 580.00,
-        "formula": "1,000 km × $0.58/km = $580.00",
-        "notes": "At tier 2 rate (over 5,000 km/year)"
-      }
     }
   },
   "specialConsiderations": {

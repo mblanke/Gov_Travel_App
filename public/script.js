@@ -266,10 +266,10 @@ function getAllowancesForRegion(destinationType) {
       `Region ${destinationType} not found in database, using international as default`
     );
     return {
-      breakfast: 29.05,
-      lunch: 29.6,
-      dinner: 60.75,
-      incidental: 17.3,
+      breakfast: 29.5,
+      lunch: 30.05,
+      dinner: 61.7,
+      incidental: 25.0,
       privateAccommodation: 50.0,
     };
   }
@@ -554,13 +554,18 @@ function calculateCosts(params, customAllowances = null) {
     }
   } else if (transportMode === "vehicle") {
     transportLabel = "Personal Vehicle";
-    const kmRate = transportationRatesDB
-      ? transportationRatesDB.kilometricRates.modules.module3.rates.tier1.perKm
-      : 0.68;
+    const provinceSelect = document.getElementById("vehicleProvince");
+    const province = provinceSelect ? provinceSelect.value : "ON";
+    const provinceRates = transportationRatesDB
+      ? transportationRatesDB.kilometricRates.provinces
+      : null;
+    const provinceEntry = provinceRates ? provinceRates[province] : null;
+    const kmRate = provinceEntry ? provinceEntry.ratePerKm : 0.655;
+    const provinceName = provinceEntry ? provinceEntry.name : province;
     transportCost = distanceKm * kmRate;
     transportNote = `Kilometric rate: $${kmRate.toFixed(
-      2
-    )}/km × ${distanceKm} km. Rate from NJC Appendix B. Parking and tolls may be additional.`;
+      3
+    )}/km × ${distanceKm} km (${provinceName} — province of vehicle registration, NJC Appendix B). Parking and tolls may be additional.`;
   } else if (transportMode === "train") {
     transportLabel = "Train Cost";
     transportCost = estimatedTransportCost;

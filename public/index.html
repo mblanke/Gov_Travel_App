@@ -134,6 +134,24 @@
                         <input type="number" id="distanceKm" min="0" step="1" placeholder="e.g., 450"
                             aria-describedby="distanceHelp">
                         <small id="distanceHelp">Kilometric rates apply based on NJC Appendix B</small>
+                        <label for="vehicleProvince">Province of Vehicle Registration</label>
+                        <select id="vehicleProvince" aria-describedby="vehicleProvinceHelp">
+                            <option value="AB">Alberta</option>
+                            <option value="BC">British Columbia</option>
+                            <option value="MB">Manitoba</option>
+                            <option value="NB">New Brunswick</option>
+                            <option value="NL">Newfoundland and Labrador</option>
+                            <option value="NT">Northwest Territories</option>
+                            <option value="NS">Nova Scotia</option>
+                            <option value="NU">Nunavut</option>
+                            <option value="ON" selected>Ontario</option>
+                            <option value="PE">Prince Edward Island</option>
+                            <option value="QC">Quebec</option>
+                            <option value="SK">Saskatchewan</option>
+                            <option value="YT">Yukon</option>
+                        </select>
+                        <small id="vehicleProvinceHelp">NJC Appendix B rates vary by province/territory of
+                            registration</small>
                     </div>
 
                     <!-- Ground Transportation Sub-Section -->

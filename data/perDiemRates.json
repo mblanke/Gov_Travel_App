@@ -1,10 +1,10 @@
 {
   "metadata": {
-    "effectiveDate": "2025-10-01",
-    "version": "1.0",
-    "source": "NJC Travel Directive Appendix C & D",
-    "lastUpdated": "2025-10-30",
-    "notes": "All rates in Canadian Dollars (CAD). US rates are same as Canada but paid in USD."
+    "effectiveDate": "2026-04-01",
+    "version": "2.0",
+    "source": "NJC Travel Directive Appendix C (effective April 1, 2026)",
+    "lastUpdated": "2026-07-20",
+    "notes": "All rates in Canadian Dollars (CAD). US rates are same as Canada but paid in USD. Alaska rates are same as Yukon but paid in USD. Values are copied from the published NJC tables — never derived by percentage math."
   },
   "regions": {
     "canada": {
@@ -12,38 +12,43 @@
       "currency": "CAD",
       "meals": {
         "breakfast": {
-          "rate100": 29.05,
-          "rate75": 21.80,
-          "rate50": 14.55
+          "rate100": 29.50,
+          "rate75": 22.15,
+          "rate50": 14.75
         },
         "lunch": {
-          "rate100": 29.60,
-          "rate75": 22.20,
-          "rate50": 14.80
+          "rate100": 30.05,
+          "rate75": 22.55,
+          "rate50": 15.05
         },
         "dinner": {
-          "rate100": 60.75,
-          "rate75": 45.55,
-          "rate50": 30.40
+          "rate100": 61.70,
+          "rate75": 46.30,
+          "rate50": 30.85
         },
         "total": {
-          "rate100": 119.40,
-          "rate75": 89.55,
-          "rate50": 59.75
+          "rate100": 121.25,
+          "rate75": 91.00,
+          "rate50": 60.65
         }
       },
       "incidentals": {
-        "rate100": 17.30,
-        "rate75": 13.00
+        "rate100": 25.00,
+        "rate75": 18.75
       },
       "privateAccommodation": {
         "day1to120": 50.00,
         "day121onward": 25.00
       },
       "dailyTotal": {
-        "rate100": 136.70,
-        "rate75": 102.55,
-        "rate50plus75": 72.75
+        "rate100": 146.25,
+        "rate75": 109.75,
+        "rate50plus75": 79.40
+      },
+      "weekendTravelHome": {
+        "twoDay": 392.50,
+        "threeDay": 588.75,
+        "fourDay": 785.00
       }
     },
     "yukon": {
@@ -51,38 +56,43 @@
       "currency": "CAD",
       "meals": {
         "breakfast": {
-          "rate100": 26.40,
-          "rate75": 19.80,
-          "rate50": 13.20
+          "rate100": 26.65,
+          "rate75": 20.00,
+          "rate50": 13.35
         },
         "lunch": {
-          "rate100": 33.50,
-          "rate75": 25.15,
-          "rate50": 16.75
+          "rate100": 33.80,
+          "rate75": 25.35,
+          "rate50": 16.90
         },
         "dinner": {
-          "rate100": 78.50,
-          "rate75": 58.90,
-          "rate50": 39.25
+          "rate100": 79.15,
+          "rate75": 59.35,
+          "rate50": 39.60
         },
         "total": {
-          "rate100": 138.40,
-          "rate75": 103.85,
-          "rate50": 69.20
+          "rate100": 139.60,
+          "rate75": 104.70,
+          "rate50": 69.85
         }
       },
       "incidentals": {
-        "rate100": 17.30,
-        "rate75": 13.00
+        "rate100": 25.00,
+        "rate75": 18.75
       },
       "privateAccommodation": {
         "day1to120": 50.00,
         "day121onward": 25.00
       },
       "dailyTotal": {
-        "rate100": 155.70,
-        "rate75": 116.85,
-        "rate50plus75": 82.20
+        "rate100": 164.60,
+        "rate75": 123.45,
+        "rate50plus75": 88.60
+      },
+      "weekendTravelHome": {
+        "twoDay": 429.20,
+        "threeDay": 643.80,
+        "fourDay": 858.40
       }
     },
     "nwt": {
@@ -90,38 +100,43 @@
       "currency": "CAD",
       "meals": {
         "breakfast": {
-          "rate100": 30.05,
-          "rate75": 22.55,
-          "rate50": 15.05
+          "rate100": 29.05,
+          "rate75": 21.80,
+          "rate50": 14.55
         },
         "lunch": {
-          "rate100": 35.65,
-          "rate75": 26.75,
-          "rate50": 17.85
+          "rate100": 34.45,
+          "rate75": 25.85,
+          "rate50": 17.25
         },
         "dinner": {
-          "rate100": 76.05,
-          "rate75": 57.05,
-          "rate50": 38.05
+          "rate100": 73.55,
+          "rate75": 55.15,
+          "rate50": 36.80
         },
         "total": {
-          "rate100": 141.75,
-          "rate75": 106.35,
-          "rate50": 70.95
+          "rate100": 137.05,
+          "rate75": 102.80,
+          "rate50": 68.60
         }
       },
       "incidentals": {
-        "rate100": 17.30,
-        "rate75": 13.00
+        "rate100": 25.00,
+        "rate75": 18.75
       },
       "privateAccommodation": {
         "day1to120": 50.00,
         "day121onward": 25.00
       },
       "dailyTotal": {
-        "rate100": 159.05,
-        "rate75": 119.35,
-        "rate50plus75": 83.95
+        "rate100": 162.05,
+        "rate75": 121.55,
+        "rate50plus75": 87.35
+      },
+      "weekendTravelHome": {
+        "twoDay": 424.10,
+        "threeDay": 636.15,
+        "fourDay": 848.20
       }
     },
     "nunavut": {
@@ -129,38 +144,43 @@
       "currency": "CAD",
       "meals": {
         "breakfast": {
-          "rate100": 35.05,
-          "rate75": 26.30,
-          "rate50": 17.55
+          "rate100": 35.20,
+          "rate75": 26.40,
+          "rate50": 17.60
         },
         "lunch": {
-          "rate100": 41.60,
-          "rate75": 31.20,
-          "rate50": 20.80
+          "rate100": 41.80,
+          "rate75": 31.35,
+          "rate50": 20.90
         },
         "dinner": {
-          "rate100": 100.45,
-          "rate75": 75.35,
-          "rate50": 50.25
+          "rate100": 100.95,
+          "rate75": 75.70,
+          "rate50": 50.50
         },
         "total": {
-          "rate100": 177.10,
-          "rate75": 132.85,
-          "rate50": 88.60
+          "rate100": 177.95,
+          "rate75": 133.45,
+          "rate50": 89.00
         }
       },
       "incidentals": {
-        "rate100": 17.30,
-        "rate75": 13.00
+        "rate100": 25.00,
+        "rate75": 18.75
       },
       "privateAccommodation": {
         "day1to120": 50.00,
         "day121onward": 25.00
       },
       "dailyTotal": {
-        "rate100": 194.40,
-        "rate75": 145.85,
-        "rate50plus75": 101.60
+        "rate100": 202.95,
+        "rate75": 152.20,
+        "rate50plus75": 107.75
+      },
+      "weekendTravelHome": {
+        "twoDay": 505.90,
+        "threeDay": 758.85,
+        "fourDay": 1011.80
       }
     },
     "usa": {
@@ -168,38 +188,43 @@
       "currency": "USD",
       "meals": {
         "breakfast": {
-          "rate100": 29.05,
-          "rate75": 21.80,
-          "rate50": 14.55
+          "rate100": 29.50,
+          "rate75": 22.15,
+          "rate50": 14.75
         },
         "lunch": {
-          "rate100": 29.60,
-          "rate75": 22.20,
-          "rate50": 14.80
+          "rate100": 30.05,
+          "rate75": 22.55,
+          "rate50": 15.05
         },
         "dinner": {
-          "rate100": 60.75,
-          "rate75": 45.55,
-          "rate50": 30.40
+          "rate100": 61.70,
+          "rate75": 46.30,
+          "rate50": 30.85
         },
         "total": {
-          "rate100": 119.40,
-          "rate75": 89.55,
-          "rate50": 59.75
+          "rate100": 121.25,
+          "rate75": 91.00,
+          "rate50": 60.65
         }
       },
       "incidentals": {
-        "rate100": 17.30,
-        "rate75": 13.00
+        "rate100": 25.00,
+        "rate75": 18.75
       },
       "privateAccommodation": {
         "day1to120": 50.00,
         "day121onward": 25.00
       },
       "dailyTotal": {
-        "rate100": 136.70,
-        "rate75": 102.55,
-        "rate50plus75": 72.75
+        "rate100": 146.25,
+        "rate75": 109.75,
+        "rate50plus75": 79.40
+      },
+      "weekendTravelHome": {
+        "twoDay": 392.50,
+        "threeDay": 588.75,
+        "fourDay": 785.00
       }
     },
     "alaska": {
@@ -207,44 +232,49 @@
       "currency": "USD",
       "meals": {
         "breakfast": {
-          "rate100": 26.40,
-          "rate75": 19.80,
-          "rate50": 13.20
+          "rate100": 26.65,
+          "rate75": 20.00,
+          "rate50": 13.35
         },
         "lunch": {
-          "rate100": 33.50,
-          "rate75": 25.15,
-          "rate50": 16.75
+          "rate100": 33.80,
+          "rate75": 25.35,
+          "rate50": 16.90
         },
         "dinner": {
-          "rate100": 78.50,
-          "rate75": 58.90,
-          "rate50": 39.25
+          "rate100": 79.15,
+          "rate75": 59.35,
+          "rate50": 39.60
         },
         "total": {
-          "rate100": 138.40,
-          "rate75": 103.85,
-          "rate50": 69.20
+          "rate100": 139.60,
+          "rate75": 104.70,
+          "rate50": 69.85
         }
       },
       "incidentals": {
-        "rate100": 17.30,
-        "rate75": 13.00
+        "rate100": 25.00,
+        "rate75": 18.75
       },
       "privateAccommodation": {
         "day1to120": 50.00,
         "day121onward": 25.00
       },
       "dailyTotal": {
-        "rate100": 155.70,
-        "rate75": 116.85,
-        "rate50plus75": 82.20
+        "rate100": 164.60,
+        "rate75": 123.45,
+        "rate50plus75": 88.60
+      },
+      "weekendTravelHome": {
+        "twoDay": 429.20,
+        "threeDay": 643.80,
+        "fourDay": 858.40
       }
     },
     "international": {
       "name": "International (Outside Canada/USA)",
       "currency": "CAD",
-      "notes": "Rates vary by country. See Appendix D for specific country rates. These are average estimates.",
+      "notes": "Rates vary by country. See Appendix D (data/internationalRates.json) for specific country rates. These are average estimates used only when no country match is found.",
       "meals": {
         "breakfast": {
           "rate100": 35.00,
@@ -268,17 +298,17 @@
         }
       },
       "incidentals": {
-        "rate100": 20.00,
-        "rate75": 15.00
+        "rate100": 25.00,
+        "rate75": 18.75
       },
       "privateAccommodation": {
-        "day1to120": 60.00,
-        "day121onward": 30.00
+        "day1to120": 50.00,
+        "day121onward": 25.00
       },
       "dailyTotal": {
-        "rate100": 180.00,
-        "rate75": 135.00,
-        "rate50plus75": 95.00
+        "rate100": 185.00,
+        "rate75": 138.75,
+        "rate50plus75": 98.75
       }
     }
   },
