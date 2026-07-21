@@ -23,11 +23,21 @@ module.exports = [
   },
   // Browser globals for frontend files (now in public/)
   {
-    files: ["public/script.js", "public/script_*.js", "public/voiceAgent.js", "public/enhanced-features.js"],
+    files: ["public/*.js"],
     languageOptions: {
       sourceType: "script",
       globals: {
         ...globals.browser,
+      },
+    },
+  },
+  {
+    // Cross-file globals: defined in voiceAgent.js, referenced from script.js
+    files: ["public/script.js"],
+    languageOptions: {
+      globals: {
+        stopVoiceAgent: "readonly",
+        toggleVoiceAgent: "readonly",
       },
     },
   },

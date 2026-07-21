@@ -5,6 +5,12 @@
 const request = require("supertest");
 const app = require("../server");
 
+// Hardcoded dates rot: validation rejects past dates, so derive from today
+function futureDate(daysAhead) {
+  const d = new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000);
+  return d.toISOString().slice(0, 10);
+}
+
 afterAll(() => {
   // Give the server listener time to close
   return new Promise((resolve) => setTimeout(resolve, 500));
@@ -84,8 +90,8 @@ describe("Flight Search API", () => {
       .query({
         origin: "Ottawa",
         destination: "Vancouver",
-        departureDate: "2026-06-01",
-        returnDate: "2026-06-05",
+        departureDate: futureDate(30),
+        returnDate: futureDate(34),
       });
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("flights");

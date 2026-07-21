@@ -291,7 +291,7 @@ function generateSampleLayovers(originCode, destinationCode, stops, carrier) {
   ];
 
   // Build a route chain based on destination region
-  let hubChain = [];
+  let hubChain;
 
   switch (region) {
     case "canada":

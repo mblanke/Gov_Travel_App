@@ -462,8 +462,10 @@ app.use((req, res) => {
   res.status(404).json({ error: "Endpoint not found" });
 });
 
-// Start server
-const server = app.listen(PORT, () => {
+// Start server (skip when required by tests — supertest binds its own port)
+let server;
+if (require.main === module) {
+  server = app.listen(PORT, () => {
   logger.info("==========================================");
   logger.info("Government Travel Cost Estimator v1.2.0");
   logger.info("==========================================");
@@ -491,23 +493,24 @@ const server = app.listen(PORT, () => {
 
   logger.info(`📝 Log files: ${path.join(__dirname, "logs")}`);
   logger.info(`💾 Cache enabled: Flights (1h), Rates (24h), DB (5m)`);
-  logger.info("==========================================");
-  logger.info("Press Ctrl+C to stop the server");
-});
+    logger.info("==========================================");
+    logger.info("Press Ctrl+C to stop the server");
+  });
 
-// Graceful shutdown
-process.on("SIGTERM", () => {
-  logger.info("SIGTERM signal received: closing HTTP server");
-  server.close(() => {
-    logger.info("HTTP server closed");
-    cache.clearAll();
+  // Graceful shutdown
+  process.on("SIGTERM", () => {
+    logger.info("SIGTERM signal received: closing HTTP server");
+    server.close(() => {
+      logger.info("HTTP server closed");
+      cache.clearAll();
+      process.exit(0);
+    });
+  });
+
+  process.on("SIGINT", () => {
+    logger.info("SIGINT signal received: closing HTTP server");
     process.exit(0);
   });
-});
-
-process.on("SIGINT", () => {
-  logger.info("SIGINT signal received: closing HTTP server");
-  process.exit(0);
-});
+}
 
 module.exports = app;
