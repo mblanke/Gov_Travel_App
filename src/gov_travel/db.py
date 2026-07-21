@@ -34,30 +34,34 @@ SCHEMA_STATEMENTS = [
     )
     """,
     """
-    CREATE TABLE IF NOT EXISTS exchange_rates (
+    CREATE TABLE IF NOT EXISTS appendix_d_rates (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        source TEXT NOT NULL,
-        source_url TEXT NOT NULL,
-        currency TEXT,
-        rate_to_cad REAL,
-        effective_date TEXT,
-        raw_json TEXT NOT NULL
+        country TEXT NOT NULL,
+        country_key TEXT NOT NULL,
+        currency TEXT NOT NULL,
+        city TEXT NOT NULL,
+        city_key TEXT NOT NULL,
+        tier TEXT NOT NULL,
+        breakfast REAL,
+        lunch REAL,
+        dinner REAL,
+        meal_total REAL,
+        incidental REAL,
+        grand_total REAL,
+        effective_date TEXT
     )
     """,
     """
-    CREATE TABLE IF NOT EXISTS accommodations (
+    CREATE TABLE IF NOT EXISTS city_rate_limits (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        source TEXT NOT NULL,
-        source_url TEXT NOT NULL,
-        property_name TEXT,
-        address TEXT,
-        city TEXT,
-        province TEXT,
-        phone TEXT,
-        rate_amount REAL,
-        currency TEXT,
-        effective_date TEXT,
-        raw_json TEXT NOT NULL
+        section TEXT NOT NULL,
+        city TEXT NOT NULL,
+        city_key TEXT NOT NULL,
+        province_state TEXT,
+        country TEXT,
+        currency TEXT NOT NULL,
+        monthly_rates_json TEXT NOT NULL,
+        effective_date TEXT
     )
     """,
 ]
@@ -76,6 +80,17 @@ def init_db(connection: sqlite3.Connection) -> None:
     connection.commit()
 
 
+def clear_source(connection: sqlite3.Connection, source: str) -> None:
+    """Remove a source's rows so re-scrapes replace instead of append."""
+    connection.execute("DELETE FROM raw_tables WHERE source = ?", (source,))
+    connection.execute("DELETE FROM rate_entries WHERE source = ?", (source,))
+    if source == "international":
+        connection.execute("DELETE FROM appendix_d_rates")
+    if source == "accommodations":
+        connection.execute("DELETE FROM city_rate_limits")
+    connection.commit()
+
+
 def insert_raw_tables(
     connection: sqlite3.Connection,
     source: str,
@@ -85,7 +100,7 @@ def insert_raw_tables(
     payload = [
         (
             source,
-            source_url,
+            table.get("source_url", source_url),
             table["table_index"],
             table.get("title"),
             json.dumps(table["data"], ensure_ascii=False),
@@ -146,78 +161,70 @@ def insert_rate_entries(
     connection.commit()
 
 
-def insert_exchange_rates(
+def insert_appendix_d_rates(
     connection: sqlite3.Connection,
-    entries: Iterable[dict],
+    records: Iterable[dict],
 ) -> None:
     payload = [
         (
-            entry["source"],
-            entry["source_url"],
-            entry.get("currency"),
-            entry.get("rate_to_cad"),
-            entry.get("effective_date"),
-            json.dumps(entry["raw"], ensure_ascii=False),
+            record["country"],
+            record["country_key"],
+            record["currency"],
+            record["city"],
+            record["city_key"],
+            record["tier"],
+            record.get("breakfast"),
+            record.get("lunch"),
+            record.get("dinner"),
+            record.get("meal_total"),
+            record.get("incidental"),
+            record.get("grand_total"),
+            record.get("effective_date"),
         )
-        for entry in entries
+        for record in records
     ]
     if not payload:
         return
     connection.executemany(
         """
-        INSERT INTO exchange_rates (
-            source,
-            source_url,
-            currency,
-            rate_to_cad,
-            effective_date,
-            raw_json
+        INSERT INTO appendix_d_rates (
+            country, country_key, currency, city, city_key, tier,
+            breakfast, lunch, dinner, meal_total, incidental, grand_total,
+            effective_date
         )
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         payload,
     )
     connection.commit()
 
 
-def insert_accommodations(
+def insert_city_rate_limits(
     connection: sqlite3.Connection,
-    entries: Iterable[dict],
+    records: Iterable[dict],
 ) -> None:
     payload = [
         (
-            entry["source"],
-            entry["source_url"],
-            entry.get("property_name"),
-            entry.get("address"),
-            entry.get("city"),
-            entry.get("province"),
-            entry.get("phone"),
-            entry.get("rate_amount"),
-            entry.get("currency"),
-            entry.get("effective_date"),
-            json.dumps(entry["raw"], ensure_ascii=False),
+            record["section"],
+            record["city"],
+            record["city_key"],
+            record.get("province_state"),
+            record.get("country"),
+            record["currency"],
+            json.dumps(record["monthly_rates"]),
+            record.get("effective_date"),
         )
-        for entry in entries
+        for record in records
     ]
     if not payload:
         return
     connection.executemany(
         """
-        INSERT INTO accommodations (
-            source,
-            source_url,
-            property_name,
-            address,
-            city,
-            province,
-            phone,
-            rate_amount,
-            currency,
-            effective_date,
-            raw_json
+        INSERT INTO city_rate_limits (
+            section, city, city_key, province_state, country, currency,
+            monthly_rates_json, effective_date
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
         payload,
     )
